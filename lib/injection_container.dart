@@ -9,6 +9,7 @@ import 'core/config/app_config.dart'; // API 키 관리를 위한 클래스 (선
 
 
 // Features - Restaurant
+import 'core/services/location_service.dart';
 import 'features/restaurant/data/data_sources/restaurant_remote_data_source.dart'; // 실제 경로로 수정
 import 'features/restaurant/data/repositories/restaurant_repository_impl.dart'; // 실제 경로로 수정
 import 'features/restaurant/domain/repositories/restaurant_repository.dart'; // 실제 경로로 수정
@@ -39,7 +40,7 @@ Future<void> initDI() async {
 
   // Core Utilities
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
-
+  sl.registerLazySingleton<LocationService>(() => LocationService()); // LocationService 등록
   // --- Features ---
 
   // Restaurant Feature

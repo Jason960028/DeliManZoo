@@ -23,7 +23,8 @@ class ServerFailure extends Failure {
 
 // 네트워크 연결 오류 (예: 인터넷 연결 없음)
 class NetworkFailure extends Failure {
-  const NetworkFailure({String message = '인터넷 연결을 확인해주세요.'}) : super(message: message);
+  const NetworkFailure({String message = '인터넷 연결을 확인해주세요.', List<dynamic> properties = const []}) // properties 추가
+      : super(message: message, properties: properties);
 }
 
 // 캐시 오류 (예: 로컬 데이터 접근 실패)
@@ -52,5 +53,12 @@ class ApiFailure extends Failure {
   List<Object?> get props => [message, statusCode, properties];
 }
 
+// 위치 서비스 또는 권한 관련 오류를 위한 Failure
+class LocationFailure extends Failure {
+  const LocationFailure({required String message, List<dynamic> properties = const []})
+      : super(message: message, properties: properties);
+}
+
+
 // 필요한 경우 더 구체적인 Failure 타입을 추가할 수 있습니다.
-// 예: PermissionFailure, AuthenticationFailure 등
+// 예: PermissionFailure (더 세분화된 권한 오류), AuthenticationFailure 등

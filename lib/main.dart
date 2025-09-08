@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:geolocator/geolocator.dart';
 import 'core/error/failure.dart';
 import 'firebase_options.dart'; // flutterfire configure로 생성된 파일
 import 'package:flutter_riverpod/flutter_riverpod.dart'; // Riverpod 임포트
@@ -17,110 +18,62 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  List<RestaurantEntity> _restaurants = [];
-  bool _isLoading = false;
-  String? _errorMessage;
-
-  double _currentLat = 37.5665;
-  double _currentLng = 126.9780;
+  // _currentLat, _currentLng는 더 이상 주요 상태가 아님. 지도 연동 시 다시 사용될 수 있음.
 
   @override
   void initState() {
     super.initState();
+    // build 메서드에서 초기 위치를 가져오므로, 여기서 명시적으로 호출할 필요는 없음.
+    // 만약 Provider의 build가 실패하여 UI에 오류가 표시된 후 사용자가 재시도하고 싶다면,
+    // 아래와 같은 로직을 새로고침 버튼에 연결할 수 있습니다.
   }
 
-  // 지도 이동 시 호출될 메서드 (예시)
-  void _onMapMoved(double newLat, double newLng) {
-    setState(() {
-      _currentLat = newLat;
-      _currentLng = newLng;
-    });
-    // 지도 이동이 끝나면 해당 위치의 음식점 데이터를 새로고침
-    ref.read(restaurantListProvider.notifier).fetchRestaurantsForLocation(newLat, newLng);
-    print("Map moved to: $newLat, $newLng. Fetching new restaurants.");
-  }
-
-  Future<void> _fetchNearbyRestaurants() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final repository = di.sl<RestaurantRepository>();
-      // 예시 위도와 경도 (실제로는 사용자 위치나 검색 위치를 사용해야 함)
-      // 예: 서울 시청 근처
-      const double lat = 37.5665;
-      const double lng = 126.9780;
-
-      final result = await repository.getNearbyRestaurants(lat, lng);
-
-      result.fold(
-            (failure) {
-          // 오류 처리
-          if (mounted) { // 위젯이 아직 화면에 마운트되어 있을 때만 setState 호출
-            print("API 호출 실패: ${failure.message}");
-            setState(() {
-              _errorMessage = failure.message;
-              _restaurants = [];
-              _isLoading = false;
-            });
-          }
-        },
-            (restaurants) {
-          // 성공 처리
-          if (mounted) { // 위젯이 아직 화면에 마운트되어 있을 때만 setState 호출
-            print("API 호출 성공: ${restaurants.length}개의 음식점 발견");
-            // for (var restaurant in restaurants) {
-            //   print("이름: ${restaurant.name}, 주소: ${restaurant.address}, 평점: ${restaurant.rating}");
-            // }
-            setState(() {
-              _restaurants = restaurants;
-              _isLoading = false;
-            });
-          }
-        },
-      );
-    } catch (e) {
-      // RepositoryImpl에서 예외를 Failure로 변환하지 못한 경우
-      if (mounted) { // 위젯이 아직 화면에 마운트되어 있을 때만 setState 호출
-        print("알 수 없는 오류 발생: $e");
-        setState(() {
-          _errorMessage = "알 수 없는 오류가 발생했습니다.";
-          _restaurants = [];
-          _isLoading = false;
-        });
-      }
-    }
-  }
+  // 지도 이동 시 호출될 메서드는 지도 연동 후 사용
+  // void _onMapMoved(double newLat, double newLng) { ... }
 
   @override
   Widget build(BuildContext context) {
-    // restaurantListProvider를 watch하여 상태 변화를 감지하고 UI를 다시 빌드
     final restaurantsAsyncValue = ref.watch(restaurantListProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('홈 (주변 음식점 - Riverpod)'),
+        title: const Text('홈 (내 주변 음식점)'), // 타이틀 변경
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            // 현재 위치로 데이터 다시 가져오기
-            onPressed: () => ref.read(restaurantListProvider.notifier).fetchRestaurantsForLocation(_currentLat, _currentLng),
-          ),
-          // 임시: 지도 이동 시뮬레이션 버튼
-          IconButton(
-            icon: const Icon(Icons.location_searching),
-            onPressed: () => _onMapMoved(37.4979, 127.0276), // 강남역으로 이동 (예시)
+          // 현재 위치 기반 새로고침 버튼
+          restaurantsAsyncValue.isLoading // 로딩 중일때는 버튼 비활성화 또는 다른 아이콘 표시
+              ? const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 3, color: Colors.white)
+            ),
           )
+              : IconButton(
+            icon: const Icon(Icons.my_location), // 아이콘 변경
+            tooltip: "내 위치 새로고침",
+            onPressed: () => ref
+                .read(restaurantListProvider.notifier)
+                .fetchRestaurantsForCurrentLocation(),
+          ),
+          // 임시: 지도 이동 시뮬레이션 버튼 (나중에 실제 지도로 대체)
+          // IconButton(
+          //   icon: const Icon(Icons.location_searching),
+          //   onPressed: () => _onMapMoved(37.4979, 127.0276), // 강남역으로 이동 (예시)
+          // )
         ],
       ),
       body: Center(
-        // AsyncValue를 사용하여 로딩, 데이터, 오류 상태를 쉽게 처리
         child: restaurantsAsyncValue.when(
           data: (restaurants) {
+            // ... (기존 ListView.builder UI는 동일) ...
+            print("UI Update - Restaurants count: ${restaurants.length}"); // <--- 디버깅 로그 추가
+            if (restaurants.isNotEmpty) {
+              print("First restaurant name: ${restaurants.first.name}"); // <--- 디버깅 로그 추가
+            }
+
             if (restaurants.isEmpty) {
-              return const Text('주변에 음식점이 없습니다.', style: TextStyle(fontSize: 16));
+              return const Text('주변에 음식점이 없습니다. 다른 곳에서 검색해보세요.', style: TextStyle(fontSize: 16), textAlign: TextAlign.center,);
             }
             return ListView.builder(
               itemCount: restaurants.length,
@@ -130,7 +83,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                   child: ListTile(
                     leading: restaurant.photoReference != null
-                    // 실제로는 Image.network 등으로 사진 표시
+                    // 실제로는 Image.network 등으로 사진 표시 (Photos API 필요)
                         ? CircleAvatar(child: Icon(Icons.image), backgroundColor: Colors.grey[300])
                         : Icon(Icons.restaurant, color: Theme.of(context).primaryColor),
                     title: Text(restaurant.name, style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -153,6 +106,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     )
                         : const Text('평점 없음', style: TextStyle(fontSize: 12, color: Colors.grey)),
                     isThreeLine: restaurant.phoneNumber != null && restaurant.phoneNumber!.isNotEmpty,
+                    // onTap: () {
+                    //   // 상세 페이지로 이동하는 로직 구현 예정
+                    //   print('${restaurant.name} 선택됨');
+                    // },
                   ),
                 );
               },
@@ -160,13 +117,53 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           },
           loading: () => const CircularProgressIndicator(),
           error: (error, stackTrace) {
-            print("Error in UI: $error");
+            print("Error in UI: $error, StackTrace: $stackTrace");
+            String errorMessage = "음식점 정보를 불러오는데 실패했습니다.";
+            if (error is Failure) {
+              errorMessage = error.message;
+            } else if (error is String) {
+              errorMessage = error;
+            }
+            // 위치 권한 오류 시 사용자에게 설정으로 이동하도록 안내
+            if (errorMessage.contains("위치 권한이 영구적으로 거부되었습니다")) {
+              return Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(errorMessage, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: () {
+                        Geolocator.openAppSettings(); // 앱 설정 화면으로 이동
+                      },
+                      child: const Text('앱 설정으로 이동'),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton( // 새로고침 버튼 추가
+                      onPressed: () => ref
+                          .read(restaurantListProvider.notifier)
+                          .fetchRestaurantsForCurrentLocation(),
+                      child: const Text('다시 시도'),
+                    ),
+                  ],
+                ),
+              );
+            }
             return Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text(
-                '오류 발생: ${error is Failure ? error.message : error.toString()}', // Failure 객체면 message 사용
-                style: const TextStyle(color: Colors.red, fontSize: 16),
-                textAlign: TextAlign.center,
+              child: Column( // 다시 시도 버튼을 위해 Column 사용
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(errorMessage, style: const TextStyle(color: Colors.red, fontSize: 16), textAlign: TextAlign.center),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => ref
+                        .read(restaurantListProvider.notifier)
+                        .fetchRestaurantsForCurrentLocation(),
+                    child: const Text('다시 시도'),
+                  ),
+                ],
               ),
             );
           },
