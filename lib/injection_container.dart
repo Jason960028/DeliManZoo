@@ -6,7 +6,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 // Core
 import 'core/platform/network_info.dart';
-import 'core/config/app_config.dart'; // AppConfig 사용 유지
 
 // Features - Restaurant
 import 'core/services/location_service.dart';

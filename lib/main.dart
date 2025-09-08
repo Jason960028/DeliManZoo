@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -12,7 +11,6 @@ import 'injection_container.dart' as di; // DI 컨테이너 임포트
 import 'features/restaurant/domain/entities/restaurant_entity.dart';
 import 'features/restaurant/domain/repositories/restaurant_repository.dart';
 import 'features/restaurant/presentation/providers/restaurant_providers.dart';
-import 'core/services/location_service.dart'; // LocationService Provider를 위해
 
 // HomeScreen
 class HomeScreen extends ConsumerStatefulWidget {

@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/restaurant_entity.dart';
-import 'package:geolocator/geolocator.dart'; // Position 타입을 위해
 import '../../../../core/error/failure.dart'; // Failure 및 하위 클래스들 임포트
 import '../../../../core/services/location_service.dart';
 import '../../domain/use_cases/get_nearby_restaurants_use_case.dart';
