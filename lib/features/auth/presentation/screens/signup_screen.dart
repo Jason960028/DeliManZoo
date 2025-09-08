@@ -600,7 +600,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 color: Colors.white,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w600,
-                                decoration: TextDecoration.underline,
                               ),
                             ),
                           ),

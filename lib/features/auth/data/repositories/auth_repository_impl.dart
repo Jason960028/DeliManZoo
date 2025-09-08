@@ -11,6 +11,7 @@ class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
   bool _isInitialized = false;
+  
 
   AuthRepositoryImpl({
     required FirebaseAuth firebaseAuth,
@@ -35,7 +36,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
         await _googleSignIn.initialize(
           serverClientId: webClientId, // Android에서 필요
-          scopes: ['email', 'profile'],
+          // scopes: ['email', 'profile'],
         );
         _isInitialized = true;
         print("Google Sign-In initialized successfully");
@@ -45,6 +46,8 @@ class AuthRepositoryImpl implements AuthRepository {
       }
     }
   }
+
+  
 
   @override
   Future<Either<Failure, UserEntity>> signUpWithEmail({
@@ -99,15 +102,13 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _ensureGoogleSignInInitialized();
 
-      // Check if authentication is supported
-      if (!_googleSignIn.supportsAuthenticate()) {
-        return const Left(AuthFailure(message: 'Google authentication not supported on this platform.'));
+      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
+
+      if (googleUser == null) {
+        return const Left(AuthFailure(message: 'Google sign-in canceled by user.'));
       }
 
-      // Start the authentication flow
-      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
-
-      // Get authorization for Firebase
+      // Using the original authorizationClient logic as required by the project environment
       final authClient = _googleSignIn.authorizationClient;
       final authorization = await authClient.authorizationForScopes(['email']);
 
@@ -115,33 +116,30 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Left(AuthFailure(message: 'Failed to get Google access token.'));
       }
 
-      // Get the ID token
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
         return const Left(AuthFailure(message: 'Failed to get Google ID token.'));
       }
 
-      // Create Firebase credential
-      final credential = GoogleAuthProvider.credential(
+      final AuthCredential credential = GoogleAuthProvider.credential(
         accessToken: authorization!.accessToken,
         idToken: googleAuth.idToken,
       );
 
-      // Sign in to Firebase
       final userCredential = await _firebaseAuth.signInWithCredential(credential);
 
       if (userCredential.user != null) {
         final userModel = UserModel.fromFirebaseUser(userCredential.user!);
         return Right(userModel);
       } else {
-        return const Left(AuthFailure(message: 'Google sign-in failed.'));
+        return const Left(AuthFailure(message: 'Google sign-in failed after getting credentials.'));
       }
     } on FirebaseAuthException catch (e) {
       return Left(_mapFirebaseAuthException(e));
     } catch (e) {
       print("Google Sign-In error: $e");
-      return Left(AuthFailure(message: 'Error occurred during Google sign-in: ${e.toString()}'));
+      return Left(AuthFailure(message: 'An unknown error occurred during Google sign-in: ${e.toString()}'));
     }
   }
 
@@ -150,7 +148,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await Future.wait([
         _firebaseAuth.signOut(),
-        if (_isInitialized) _googleSignIn.signOut(),
+        _googleSignIn.signOut(),
       ]);
       return const Right(unit);
     } catch (e) {
