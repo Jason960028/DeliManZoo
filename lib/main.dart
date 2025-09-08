@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -431,6 +432,9 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await dotenv.load(fileName: ".env");
+
   await di.initDI(); // DI 컨테이너 초기화
   runApp(
     ProviderScope(
@@ -438,10 +442,6 @@ Future<void> main() async {
         restaurantRepositoryProviderForRiverpod.overrideWithValue(
           di.sl<RestaurantRepository>(),
         ),
-        // LocationService는 자체적으로 의존성이 없으므로,
-        // locationServiceProvider가 직접 생성하도록 두거나 여기서 override할 수도 있습니다.
-        // 예: locationServiceProvider.overrideWithValue(LocationService()),
-        // 하지만 RestaurantListNotifier에서 ref.read(locationServiceProvider)로 직접 생성하는 방식도 괜찮습니다.
       ],
       child: const MyApp(),
     ),

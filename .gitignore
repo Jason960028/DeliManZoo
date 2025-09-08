@@ -46,3 +46,17 @@ app.*.map.json
 
 # Android local properties
 **/android/local.properties
+Keys.xcconfig
+gradle.properties
+.env
+*.env
+
+# ... 기존 내용 ...
+
+# Android specific secret files
+/android/gradle.properties # Android 모듈의 gradle.properties
+/android/local.properties  # 이미 잘 포함되어 있음
+
+# iOS specific secret files
+/ios/Flutter/Keys.xcconfig # 만약 이 경로에 생성했다면
+# 또는 Keys.xcconfig 만으로도 충분할 수 있음 (현재 설정)

@@ -16,10 +16,11 @@ abstract class RestaurantRemoteDataSource {
 // RestaurantRemoteDataSource의 구현체
 class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
   final http.Client client; // HTTP 클라이언트 주입
+  final String apiKey;
   final String _baseUrl =
       'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
 
-  RestaurantRemoteDataSourceImpl({required this.client});
+  RestaurantRemoteDataSourceImpl({required this.client, required this.apiKey});
 
   @override
   Future<List<RestaurantModel>> getNearbyRestaurants(

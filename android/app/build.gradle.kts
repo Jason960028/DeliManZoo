@@ -40,7 +40,10 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        manifestPlaceholders["MAPS_API_KEY"] = properties.getProperty("MAPS_API_KEY") ?: "YOUR_DEFAULT_KEY"
+        // manifestPlaceholders 설정
+        manifestPlaceholders += mapOf( // += 로 기존 맵에 추가하거나, = mapOf()로 새로 할당
+            "GOOGLE_MAPS_API_KEY" to (project.findProperty("GOOGLE_MAPS_API_KEY") as? String ?: System.getenv("GOOGLE_MAPS_API_KEY_ENV") ?: "YOUR_DEFAULT_KEY_IF_ANY")
+        )
     }
 
     buildTypes {

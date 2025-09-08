@@ -49,6 +49,7 @@ dependencies:
   google_sign_in: ^7.1.1   # Google 로그인 지원
   # 4. Cloud Firestore (리뷰 저장을 위한 DB)
   cloud_firestore: ^6.0.1  # Cloud Firestore
+  flutter_dotenv: ^5.1.0 # 최신 버전 확인
 
   # 5. 상태 관리 (Riverpod 사용)
   flutter_riverpod: ^2.5.1 # Riverpod의 Flutter 바인딩
@@ -81,6 +82,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+    - .env
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
