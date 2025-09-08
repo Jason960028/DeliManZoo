@@ -1,14 +1,27 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+
 plugins {
     id("com.android.application")
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services")
+    // END: FlutterFire Configuration
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val properties = Properties()
+val localPropertiesFile = project.rootProject.file("local.properties") // android 폴더에 있는 local.properties를 참조
+if (localPropertiesFile.exists()) {
+    properties.load(FileInputStream(localPropertiesFile))
+}
+
 android {
     namespace = "com.example.delimanzoo"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -24,10 +37,12 @@ android {
         applicationId = "com.example.delimanzoo"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdkVersion(23)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        manifestPlaceholders["MAPS_API_KEY"] = properties.getProperty("MAPS_API_KEY") ?: "YOUR_DEFAULT_KEY_IF_ANY"
     }
 
     buildTypes {
