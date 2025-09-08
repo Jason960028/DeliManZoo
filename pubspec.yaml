@@ -47,7 +47,6 @@ dependencies:
   firebase_core: ^4.1.0      # Firebase 기본 SDK (필수)
   firebase_auth: ^6.0.2    # Firebase Authentication
   google_sign_in: ^7.1.1   # Google 로그인 지원
-
   # 4. Cloud Firestore (리뷰 저장을 위한 DB)
   cloud_firestore: ^6.0.1  # Cloud Firestore
 
@@ -56,12 +55,15 @@ dependencies:
   # riverpod: ^2.5.1         # (선택 사항) flutter_riverpod에 포함되어 있지만, 명시적으로 추가 가능
 
   # 기타 유용한 패키지 (선택 사항)
+  dartz: ^0.10.1 # 또는 최신 버전
   # intl: ^0.19.0            # 날짜/숫자 포맷팅 등 국제화
-  # equatable: ^2.0.5        # 객체 비교 단순화 (주로 Bloc/Cubit과 함께 사용되지만, 모델/엔티티에 유용)
+  equatable: ^2.0.5        # 객체 비교 단순화 (주로 Bloc/Cubit과 함께 사용되지만, 모델/엔티티에 유용)
   # shared_preferences: ^2.2.3 # 간단한 데이터 저장 (예: 사용자 설정)
   # image_picker: ^1.1.2     # 이미지 선택 (리뷰에 사진 첨부 시)
   # geolocator: ^12.0.0      # 현재 위치 가져오기 (지도 주변 검색 시)
   # permission_handler: ^11.3.1 # 권한 요청 (위치, 카메라 등)
+  connectivity_plus: ^6.0.3 # 또는 최신 버전
+  get_it: ^8.2.0
 
 dev_dependencies:
   flutter_test:
