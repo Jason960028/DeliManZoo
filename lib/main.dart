@@ -29,6 +29,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isMapReady = false;
   final DraggableScrollableController _scrollController = DraggableScrollableController();
   RestaurantEntity? _selectedRestaurant;
+  bool _showSearchThisAreaButton = false; // "Search This Area" 버튼 표시 여부
+  LatLng? _lastIdleMapCenter;
 
   // DraggableScrollableSheet의 최소/초기 크기 (상수로 정의하여 여러 곳에서 사용)
   static const double _sheetMinSize = 0.15;
@@ -40,6 +42,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   void initState() {
     super.initState();
+  }
+
+  void _fetchRestaurantsForCurrentMapArea() {
+    if (_mapController != null && _isMapReady) {
+      _mapController!.getVisibleRegion().then((bounds) {
+        final centerLat = (bounds.northeast.latitude + bounds.southwest.latitude) / 2;
+        final centerLng = (bounds.northeast.longitude + bounds.southwest.longitude) / 2;
+        print("Fetching restaurants for area: $centerLat, $centerLng");
+        ref.read(restaurantListProvider.notifier).fetchRestaurantsForLocation(centerLat, centerLng);
+        if (mounted) {
+          setState(() {
+            _showSearchThisAreaButton = false; // 검색 실행 후 버튼 숨김
+          });
+        }
+      });
+    }
   }
 
   void _onMapCreated(GoogleMapController controller) {
@@ -151,48 +169,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: Text(
           '주변 음식점',
         ),
-        actions: [
-          restaurantsAsyncValue.isLoading
-              ? const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  // color: Colors.white, // Glassmorphism AppBar 아이콘 색상
-                )),
-          )
-              : IconButton(
-            icon: const Icon(Icons.my_location
-              // , color: Colors.white // Glassmorphism AppBar 아이콘 색상
-            ),
-            tooltip: "내 위치 음식점 검색",
-            onPressed: () async {
-              try {
-                final position = await ref.read(locationServiceProvider).getCurrentPosition();
-                _moveCameraToPosition(LatLng(position.latitude, position.longitude));
-                ref.read(restaurantListProvider.notifier).fetchRestaurantsForCurrentLocation();
-                if (mounted) {
-                  setState(() {
-                    _selectedRestaurant = null;
-                  });
-                }
-                _scrollController.animateTo(
-                  _sheetInitialSize,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('현재 위치를 가져올 수 없습니다: $e')),
-                  );
-                }
-              }
-            },
-          ),
-        ],
       ),
       body: Stack(
         children: [
@@ -224,11 +200,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // Glassmorphism 시트가 올라오므로, 지도 패딩은 시트 최소 높이만큼 유지
             padding: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * _sheetMinSize),
             onCameraIdle: () {
+              // 지도 이동이 멈췄을 때
               if (_mapController != null && _isMapReady) {
                 _mapController!.getVisibleRegion().then((bounds) {
                   final centerLat = (bounds.northeast.latitude + bounds.southwest.latitude) / 2;
                   final centerLng = (bounds.northeast.longitude + bounds.southwest.longitude) / 2;
-                  ref.read(restaurantListProvider.notifier).fetchRestaurantsForLocation(centerLat, centerLng);
+                  _lastIdleMapCenter = LatLng(centerLat, centerLng); // 마지막 중심 저장
+
+                  // 이전에 로드된 데이터가 없거나, 마지막 로드 위치와 현재 위치가 많이 다를 때 버튼 표시
+                  // 또는 단순히 지도 이동이 끝나면 항상 버튼 표시 (더 간단)
+                  if (mounted) {
+                    setState(() {
+                      _showSearchThisAreaButton = true;
+                    });
+                  }
                 });
               }
             },
@@ -248,7 +233,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // 필요하다면 지도 스타일 변경 (예: 어두운 스타일)
             // style: await MapStyleHelper.loadMapStyle('assets/map_styles/dark_style.json'),
           ),
-
+          // 3. "Search This Area" 버튼
+          if (_showSearchThisAreaButton)
+            Positioned(
+              top: 10.0, // AppBar 바로 아래 여백
+              left: 0,
+              right: 0,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ElevatedButton.icon(
+                  icon: Icon(Icons.search, color: colorScheme.onPrimary),
+                  label: Text('이 지역 검색', style: TextStyle(color: colorScheme.onPrimary, fontWeight: FontWeight.bold)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: colorScheme.primary.withOpacity(0.9),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25.0)),
+                    elevation: 5,
+                  ),
+                  onPressed: () {
+                    _fetchRestaurantsForCurrentMapArea();
+                  },
+                ),
+              ),
+            ),
           // 3. DraggableScrollableSheet with Glassmorphism
           DraggableScrollableSheet(
             controller: _scrollController,
@@ -301,7 +308,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           padding: const EdgeInsets.all(16.0),
                           child: Text(
                             '주변에 표시할 음식점이 없습니다.',
-                            style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 16),
+                            style: TextStyle(color: darkContentColor, fontSize: 16),
                             textAlign: TextAlign.center,
                           ),
                         ),
@@ -600,3 +607,4 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+

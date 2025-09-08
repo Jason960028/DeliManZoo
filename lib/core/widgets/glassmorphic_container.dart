@@ -22,8 +22,8 @@ class GlassmorphicContainer extends StatelessWidget {
     this.width = double.infinity,
     this.height = double.infinity,
     this.borderRadius = 16.0,
-    this.blurSigmaX = 5.0, // 블러 강도 조절
-    this.blurSigmaY = 5.0, // 블러 강도 조절
+    this.blurSigmaX = 10.0, // 블러 강도 조절
+    this.blurSigmaY = 10.0, // 블러 강도 조절
     this.backgroundColorWithOpacity = const Color.fromRGBO(255, 255, 255, 0.2), // 기본 반투명 흰색
     this.gradient,
     this.border,

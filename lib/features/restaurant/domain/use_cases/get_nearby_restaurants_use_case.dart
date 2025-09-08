@@ -23,7 +23,6 @@ abstract class UseCase<Type, Params extends UseCaseParams> {
   Future<Either<Failure, Type>> call(Params params);
 }
 
-
 // 주변 음식점 목록을 가져오는 Use Case
 class GetNearbyRestaurantsUseCase
     implements UseCase<List<RestaurantEntity>, GetNearbyRestaurantsParams> {
