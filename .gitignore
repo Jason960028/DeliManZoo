@@ -48,7 +48,7 @@ app.*.map.json
 **/android/local.properties
 Keys.xcconfig
 gradle.properties
-.env
+/.env
 *.env
 
 # ... 기존 내용 ...
