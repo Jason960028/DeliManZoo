@@ -39,9 +39,9 @@ class AuthRepositoryImpl implements AuthRepository {
           // scopes: ['email', 'profile'],
         );
         _isInitialized = true;
-        print("Google Sign-In initialized successfully");
+        
       } catch (e) {
-        print("Failed to initialize Google Sign-In: $e");
+        
         throw Exception('Failed to initialize Google Sign-In: $e');
       }
     }
@@ -138,7 +138,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on FirebaseAuthException catch (e) {
       return Left(_mapFirebaseAuthException(e));
     } catch (e) {
-      print("Google Sign-In error: $e");
+      
       return Left(AuthFailure(message: 'An unknown error occurred during Google sign-in: ${e.toString()}'));
     }
   }

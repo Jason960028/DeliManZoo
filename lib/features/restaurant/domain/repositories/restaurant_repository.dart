@@ -11,4 +11,12 @@ abstract class RestaurantRepository {
       double lat,
       double lng,
       );
+
+  /// 검색어로 음식점 목록을 검색합니다.
+  ///
+  /// 성공 시 [RestaurantEntity]의 리스트를 포함하는 Right를 반환합니다.
+  /// 실패 시 [Failure]를 포함하는 Left를 반환합니다.
+  Future<Either<Failure, List<RestaurantEntity>>> searchRestaurants(
+    String query,
+  );
 }

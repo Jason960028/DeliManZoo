@@ -11,6 +11,9 @@ abstract class RestaurantRemoteDataSource {
   /// 실패 시 [ServerException]을 throw 합니다.
   Future<List<RestaurantModel>> getNearbyRestaurants(
       double lat, double lng, String apiKey);
+
+  Future<List<RestaurantModel>> searchRestaurants(
+      String query, String apiKey);
 }
 
 // RestaurantRemoteDataSource의 구현체
@@ -83,6 +86,48 @@ class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
       throw ServerException(message: '네트워크 오류: ${e.message}');
     } catch (e) {
       // 기타 예외 (예: json.decode 실패 등)
+      throw ServerException(message: '알 수 없는 오류 발생: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<List<RestaurantModel>> searchRestaurants(
+      String query, String apiKey) async {
+    final _textSearchUrl =
+      'https://maps.googleapis.com/maps/api/place/textsearch/json';
+    final url = Uri.parse('$_textSearchUrl?query=$query&key=$apiKey&language=ko&type=restaurant');
+
+    try {
+      final response = await client.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        final List<dynamic> results = responseBody['results'];
+        return results
+            .map((jsonItem) => RestaurantModel.fromJson(jsonItem))
+            .toList();
+      } else {
+        String errorMessage = 'API 요청 실패';
+        try {
+          final responseBody = json.decode(response.body);
+          if (responseBody['error_message'] != null) {
+            errorMessage = responseBody['error_message'];
+          } else if (responseBody['status'] != null && responseBody['status'] != 'OK') {
+            errorMessage = 'API Status: ${responseBody['status']}';
+          }
+        } catch (e) {
+          // JSON 파싱 실패 시, 기본 에러 메시지 사용
+        }
+        throw ServerException(message: errorMessage, statusCode: response.statusCode);
+      }
+    } on http.ClientException catch (e) {
+      throw ServerException(message: '네트워크 오류: ${e.message}');
+    } catch (e) {
       throw ServerException(message: '알 수 없는 오류 발생: ${e.toString()}');
     }
   }

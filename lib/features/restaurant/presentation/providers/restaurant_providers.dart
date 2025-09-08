@@ -3,6 +3,7 @@ import '../../domain/entities/restaurant_entity.dart';
 import '../../../../core/error/failure.dart'; // Failure 및 하위 클래스들 임포트
 import '../../../../core/services/location_service.dart';
 import '../../domain/use_cases/get_nearby_restaurants_use_case.dart';
+import '../../domain/use_cases/search_restaurants_use_case.dart';
 import '../../domain/repositories/restaurant_repository.dart';
 
 // ... (getNearbyRestaurantsUseCaseProvider 주석은 그대로 두거나 필요에 따라 사용) ...
@@ -17,23 +18,23 @@ AsyncNotifierProvider<RestaurantListNotifier, List<RestaurantEntity>>(() {
 
 class RestaurantListNotifier extends AsyncNotifier<List<RestaurantEntity>> {
   late GetNearbyRestaurantsUseCase _getNearbyRestaurantsUseCase;
+  late SearchRestaurantsUseCase _searchRestaurantsUseCase;
   late LocationService _locationService;
 
   @override
   Future<List<RestaurantEntity>> build() async {
     final restaurantRepository = ref.read(restaurantRepositoryProviderForRiverpod);
     _getNearbyRestaurantsUseCase = GetNearbyRestaurantsUseCase(restaurantRepository);
+    _searchRestaurantsUseCase = SearchRestaurantsUseCase(restaurantRepository);
     _locationService = ref.read(locationServiceProvider); // LocationService 프로바이더를 통해 가져오기
 
     try {
-      print("Attempting to get current location in Notifier build...");
+      
       final position = await _locationService.getCurrentPosition();
-      print(
-          "Current location obtained in build: ${position.latitude}, ${position.longitude}");
+      
       return _fetchRestaurants(position.latitude, position.longitude);
     } catch (e) {
-      print(
-          "Error getting current location in build or fetching initial restaurants: $e");
+      
       if (e is String) {
         // LocationService에서 String으로 오류 메시지를 반환하는 경우
         if (e.contains('위치 권한') || e.contains('위치 서비스')) {
@@ -54,12 +55,11 @@ class RestaurantListNotifier extends AsyncNotifier<List<RestaurantEntity>> {
     );
     return result.fold(
           (failure) {
-        print("Error fetching restaurants in Notifier: ${failure.message}");
+        
         throw failure; // 여기는 이미 구체적인 Failure 객체가 넘어올 것으로 예상
       },
           (restaurants) {
-        print(
-            "Fetched ${restaurants.length} restaurants in Notifier for $lat, $lng");
+        
         return restaurants;
       },
     );
@@ -79,15 +79,14 @@ class RestaurantListNotifier extends AsyncNotifier<List<RestaurantEntity>> {
   Future<void> fetchRestaurantsForCurrentLocation() async {
     state = const AsyncValue.loading();
     try {
-      print("Attempting to get current location for refresh...");
+      
       final position = await _locationService.getCurrentPosition();
-      print(
-          "Current location obtained for refresh: ${position.latitude}, ${position.longitude}");
+      
       final restaurants =
       await _fetchRestaurants(position.latitude, position.longitude);
       state = AsyncValue.data(restaurants);
     } catch (e, s) {
-      print("Error fetching restaurants for current location: $e");
+      
       if (e is String) {
         // LocationService에서 String으로 오류 메시지를 반환하는 경우
         if (e.contains('위치 권한') || e.contains('위치 서비스')) {
@@ -102,6 +101,15 @@ class RestaurantListNotifier extends AsyncNotifier<List<RestaurantEntity>> {
               message: "현재 위치를 사용한 새로고침에 실패했습니다: ${e.toString()}"), // <<< 수정: ServerFailure 사용
           s);
     }
+  }
+
+  Future<void> searchRestaurants(String query) async {
+    state = const AsyncValue.loading();
+    final result = await _searchRestaurantsUseCase(SearchRestaurantsParams(query: query));
+    result.fold(
+      (failure) => state = AsyncValue.error(failure, StackTrace.current),
+      (restaurants) => state = AsyncValue.data(restaurants),
+    );
   }
 }
 

@@ -33,7 +33,7 @@ Future<void> initDI() async {
   if (googleMapsApiKey == null) {
     throw Exception("GOOGLE_MAPS_API_KEY not found in .env file");
   }
-  print("DI Initialized with API Key from .env: $googleMapsApiKey");
+  
 
   // AppConfig 등록 (API 키를 중앙에서 관리하고 다른 곳에서 참조하기 위함)
   sl.registerLazySingleton<AppConfig>(() => AppConfig(googleMapsApiKey: googleMapsApiKey));
@@ -91,7 +91,7 @@ Future<void> initDI() async {
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
 
-  print('DI Initialized successfully. API Key from AppConfig: ${sl<AppConfig>().googleMapsApiKey}');
+  
 }
 
 // API 키와 같은 설정을 위한 간단한 클래스

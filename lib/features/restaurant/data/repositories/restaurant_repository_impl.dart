@@ -52,6 +52,24 @@ class RestaurantRepositoryImpl implements RestaurantRepository {
       return Left(NetworkFailure(message: '인터넷에 연결되어 있지 않습니다.'));
     }
   }
+
+  @override
+  Future<Either<Failure, List<RestaurantEntity>>> searchRestaurants(
+      String query) async {
+    if (await networkInfo.isConnected) {
+      try {
+        final remoteRestaurants =
+            await remoteDataSource.searchRestaurants(query, apiKey);
+        return Right(remoteRestaurants);
+      } on ServerException catch (e) {
+        return Left(ServerFailure(message: e.message, properties: [e.statusCode ?? 'N/A']));
+      } catch (e) {
+        return Left(ServerFailure(message: '알 수 없는 서버 오류가 발생했습니다: ${e.toString()}'));
+      }
+    } else {
+      return Left(NetworkFailure(message: '인터넷에 연결되어 있지 않습니다.'));
+    }
+  }
 }
 
 
