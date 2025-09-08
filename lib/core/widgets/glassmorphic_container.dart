@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 class GlassmorphicContainer extends StatelessWidget {
   final Widget child;
-  final double width;
-  final double height;
+  final double? width;
+  final double? height;
   final double borderRadius;
   final double blurSigmaX;
   final double blurSigmaY;
@@ -19,8 +19,8 @@ class GlassmorphicContainer extends StatelessWidget {
   const GlassmorphicContainer({
     super.key,
     required this.child,
-    this.width = double.infinity,
-    this.height = double.infinity,
+    this.width,
+    this.height,
     this.borderRadius = 16.0,
     this.blurSigmaX = 10.0, // 블러 강도 조절
     this.blurSigmaY = 10.0, // 블러 강도 조절
@@ -34,23 +34,25 @@ class GlassmorphicContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: blurSigmaX, sigmaY: blurSigmaY),
-        child: Container(
-          width: width,
-          height: height,
-          margin: margin,
-          padding: padding,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(borderRadius),
-            color: gradient == null ? backgroundColorWithOpacity : null,
-            gradient: gradient,
-            border: border, // 예: Border.all(color: Colors.white.withOpacity(0.2))
-            boxShadow: boxShadow,
+    return Container(
+      width: width,
+      height: height,
+      margin: margin,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: blurSigmaX, sigmaY: blurSigmaY),
+          child: Container(
+            padding: padding,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(borderRadius),
+              color: gradient == null ? backgroundColorWithOpacity : null,
+              gradient: gradient,
+              border: border, // 예: Border.all(color: Colors.white.withOpacity(0.2))
+              boxShadow: boxShadow,
+            ),
+            child: child,
           ),
-          child: child,
         ),
       ),
     );

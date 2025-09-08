@@ -65,6 +65,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
+    // Listen to auth state changes and navigate on successful login
+    ref.listen(authProvider, (previous, next) {
+      next.whenData((user) {
+        if (user != null) {
+          // User successfully logged in
+          // Navigate to main app and clear the navigation stack
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/main',
+            (route) => false,
+          );
+        }
+      });
+    });
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(

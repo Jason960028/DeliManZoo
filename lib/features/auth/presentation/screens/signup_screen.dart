@@ -144,6 +144,20 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     final authState = ref.watch(authProvider);
     final passwordStrength = _getPasswordStrength(_passwordController.text);
 
+    // Listen to auth state changes and navigate on successful signup
+    ref.listen(authProvider, (previous, next) {
+      next.whenData((user) {
+        if (user != null) {
+          // User successfully signed up and is now authenticated
+          // Navigate to main app and clear the navigation stack
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/main',
+            (route) => false,
+          );
+        }
+      });
+    });
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(

@@ -3,6 +3,8 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get_it/get_it.dart';
 import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 // Core
 import 'core/platform/network_info.dart';
@@ -13,6 +15,15 @@ import 'features/restaurant/data/data_sources/restaurant_remote_data_source.dart
 import 'features/restaurant/data/repositories/restaurant_repository_impl.dart';
 import 'features/restaurant/domain/repositories/restaurant_repository.dart';
 import 'features/restaurant/domain/use_cases/get_nearby_restaurants_use_case.dart';
+
+// Features - Auth
+import 'features/auth/data/repositories/auth_repository_impl.dart';
+import 'features/auth/domain/repositories/auth_repository.dart';
+import 'features/auth/domain/use_cases/login_use_case.dart';
+import 'features/auth/domain/use_cases/signup_use_case.dart';
+import 'features/auth/domain/use_cases/google_sign_in_use_case.dart';
+import 'features/auth/domain/use_cases/logout_use_case.dart';
+import 'features/auth/domain/use_cases/get_current_user_use_case.dart';
 
 final sl = GetIt.instance;
 
@@ -28,11 +39,14 @@ Future<void> initDI() async {
   sl.registerLazySingleton<AppConfig>(() => AppConfig(googleMapsApiKey: googleMapsApiKey));
 
   // External (http.Client 또는 Dio 등록)
-  // http.Client를 사용한다고 가정
   sl.registerLazySingleton(() => http.Client());
-  // 만약 Dio를 사용한다면:
-  // sl.registerLazySingleton(() => Dio());
   sl.registerLazySingleton(() => Connectivity());
+
+  // Firebase Auth and Google Sign-In
+  sl.registerLazySingleton(() => FirebaseAuth.instance);
+
+  // Google Sign-In v7.x: instance 사용, 설정은 AuthRepository에서 처리
+  sl.registerLazySingleton(() => GoogleSignIn.instance);
 
   // Core Utilities
   sl.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(sl()));
@@ -42,13 +56,10 @@ Future<void> initDI() async {
 
   // Restaurant Feature
   // Data sources
-  // RestaurantRemoteDataSource를 한 번만 올바르게 등록합니다.
-  // RestaurantRemoteDataSourceImpl 생성자에 client와 apiKey가 필요하다고 가정합니다.
   sl.registerLazySingleton<RestaurantRemoteDataSource>(
         () => RestaurantRemoteDataSourceImpl(
-      client: sl(), // http.Client 인스턴스를 주입
-      // apiKey: googleMapsApiKey, // 직접 .env에서 읽은 키를 주입하거나, AppConfig를 통해 주입
-      apiKey: sl<AppConfig>().googleMapsApiKey, // AppConfig를 통해 API 키 주입
+      client: sl(),
+      apiKey: sl<AppConfig>().googleMapsApiKey,
     ),
   );
 
@@ -57,9 +68,6 @@ Future<void> initDI() async {
         () => RestaurantRepositoryImpl(
       remoteDataSource: sl(),
       networkInfo: sl(),
-      // Repository에서도 AppConfig를 통해 API 키를 가져올 수 있습니다.
-      // 만약 remoteDataSource가 이미 API 키를 가지고 있다면, Repository는 API 키를 직접 알 필요가 없을 수도 있습니다.
-      // 현재 RestaurantRepositoryImpl이 apiKey를 직접 필요로 한다면 아래와 같이 유지합니다.
       apiKey: sl<AppConfig>().googleMapsApiKey,
     ),
   );
@@ -67,14 +75,27 @@ Future<void> initDI() async {
   // Use cases
   sl.registerLazySingleton(() => GetNearbyRestaurantsUseCase(sl()));
 
+  // Auth Feature
+  // Repository
+  sl.registerLazySingleton<AuthRepository>(
+        () => AuthRepositoryImpl(
+      firebaseAuth: sl(),
+      googleSignIn: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => LoginUseCase(sl()));
+  sl.registerLazySingleton(() => SignupUseCase(sl()));
+  sl.registerLazySingleton(() => GoogleSignInUseCase(sl()));
+  sl.registerLazySingleton(() => LogoutUseCase(sl()));
+  sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
+
   print('DI Initialized successfully. API Key from AppConfig: ${sl<AppConfig>().googleMapsApiKey}');
 }
 
-
-// API 키와 같은 설정을 위한 간단한 클래스 (선택 사항)
-// lib/core/config/app_config.dart 파일로 분리하는 것이 좋음
+// API 키와 같은 설정을 위한 간단한 클래스
 class AppConfig {
   final String googleMapsApiKey;
   AppConfig({required this.googleMapsApiKey});
 }
-

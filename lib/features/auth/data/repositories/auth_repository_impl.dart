@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -9,6 +10,7 @@ import '../models/user_model.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuth _firebaseAuth;
   final GoogleSignIn _googleSignIn;
+  bool _isInitialized = false;
 
   AuthRepositoryImpl({
     required FirebaseAuth firebaseAuth,
@@ -24,6 +26,24 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return null;
     });
+  }
+
+  Future<void> _ensureGoogleSignInInitialized() async {
+    if (!_isInitialized) {
+      try {
+        final webClientId = dotenv.env['WEB_CLIENT_ID'];
+
+        await _googleSignIn.initialize(
+          serverClientId: webClientId, // Android에서 필요
+          scopes: ['email', 'profile'],
+        );
+        _isInitialized = true;
+        print("Google Sign-In initialized successfully");
+      } catch (e) {
+        print("Failed to initialize Google Sign-In: $e");
+        throw Exception('Failed to initialize Google Sign-In: $e');
+      }
+    }
   }
 
   @override
@@ -77,29 +97,38 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, UserEntity>> signInWithGoogle() async {
     try {
-      // Use latest google_sign_in API
-      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
+      await _ensureGoogleSignInInitialized();
 
-      if (googleUser == null) {
-        return const Left(AuthFailure(message: 'Google sign-in was cancelled.'));
+      // Check if authentication is supported
+      if (!_googleSignIn.supportsAuthenticate()) {
+        return const Left(AuthFailure(message: 'Google authentication not supported on this platform.'));
       }
 
-      // In google_sign_in v7, authentication is synchronous
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      // Start the authentication flow
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
-      // Get access token through authorization client
+      // Get authorization for Firebase
       final authClient = _googleSignIn.authorizationClient;
       final authorization = await authClient.authorizationForScopes(['email']);
-      
-      if (authorization?.accessToken == null || googleAuth.idToken == null) {
-        return const Left(AuthFailure(message: 'Failed to get Google authentication tokens.'));
+
+      if (authorization?.accessToken == null) {
+        return const Left(AuthFailure(message: 'Failed to get Google access token.'));
       }
 
+      // Get the ID token
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+
+      if (googleAuth.idToken == null) {
+        return const Left(AuthFailure(message: 'Failed to get Google ID token.'));
+      }
+
+      // Create Firebase credential
       final credential = GoogleAuthProvider.credential(
         accessToken: authorization!.accessToken,
         idToken: googleAuth.idToken,
       );
 
+      // Sign in to Firebase
       final userCredential = await _firebaseAuth.signInWithCredential(credential);
 
       if (userCredential.user != null) {
@@ -111,6 +140,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on FirebaseAuthException catch (e) {
       return Left(_mapFirebaseAuthException(e));
     } catch (e) {
+      print("Google Sign-In error: $e");
       return Left(AuthFailure(message: 'Error occurred during Google sign-in: ${e.toString()}'));
     }
   }
@@ -120,7 +150,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await Future.wait([
         _firebaseAuth.signOut(),
-        _googleSignIn.signOut(), // Use signOut() instead of disconnect()
+        if (_isInitialized) _googleSignIn.signOut(),
       ]);
       return const Right(unit);
     } catch (e) {
@@ -183,7 +213,6 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 }
-
 
 class AuthFailure extends Failure {
   const AuthFailure({required String message, List<dynamic> properties = const []})
