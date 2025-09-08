@@ -45,6 +45,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>io.flutter.embeded_views_preview</key>
 	<key>NSLocationWhenInUseUsageDescription</key>
         <string>이 앱은 주변 음식점을 검색하기 위해 현재 위치 정보가 필요합니다.</string>
         <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>

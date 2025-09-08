@@ -1,7 +1,6 @@
 import java.util.Properties
 import java.io.FileInputStream
 
-
 plugins {
     id("com.android.application")
     // START: FlutterFire Configuration
@@ -13,7 +12,7 @@ plugins {
 }
 
 val properties = Properties()
-val localPropertiesFile = project.rootProject.file("local.properties") // android 폴더에 있는 local.properties를 참조
+val localPropertiesFile = project.rootProject.file("local.properties")
 if (localPropertiesFile.exists()) {
     properties.load(FileInputStream(localPropertiesFile))
 }
@@ -27,7 +26,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
@@ -42,7 +40,7 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
 
-        manifestPlaceholders["MAPS_API_KEY"] = properties.getProperty("MAPS_API_KEY") ?: "YOUR_DEFAULT_KEY_IF_ANY"
+        manifestPlaceholders["MAPS_API_KEY"] = properties.getProperty("MAPS_API_KEY") ?: "YOUR_DEFAULT_KEY"
     }
 
     buildTypes {
