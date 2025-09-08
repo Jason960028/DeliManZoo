@@ -141,20 +141,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildSearchBar(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16.0),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0), // Stronger blur for liquid glass
-        child: GlassmorphicContainer(
-          width: double.infinity,
-          height: 56.0, // Common height for text fields
-          borderRadius: 16.0,
-          blurSigmaX: 0.0, // Blur handled by BackdropFilter
-          blurSigmaY: 0.0, // Blur handled by BackdropFilter
-          backgroundColorWithOpacity: colorScheme.surface.withOpacity(0.15), // Slightly less opaque for liquid glass
-          border: Border.all(color: colorScheme.onSurface.withOpacity(0.10)), // Lighter border
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0), // Match list item padding
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16.0),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+          child: GlassmorphicContainer(
+            width: double.infinity,
+            height: 56.0,
+            borderRadius: 16.0,
+            blurSigmaX: 0.0,
+            blurSigmaY: 0.0,
+            backgroundColorWithOpacity: colorScheme.surface.withOpacity(0.15),
+            border: Border.all(color: colorScheme.onSurface.withOpacity(0.10)),
             child: TextField(
               controller: _searchController,
               style: TextStyle(color: colorScheme.onSurface),
@@ -162,6 +162,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 hintText: '음식점 검색...',
                 hintStyle: TextStyle(color: colorScheme.onSurfaceVariant),
                 border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
                 prefixIcon: Icon(Icons.search, color: colorScheme.onSurfaceVariant),
                 suffixIcon: IconButton(
                   icon: Icon(Icons.clear, color: colorScheme.onSurfaceVariant),
@@ -227,6 +228,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
       body: Column(
         children: [
+          _buildSearchBar(context),
           Expanded(
             child: Stack(
               children: [
@@ -517,7 +519,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ],
             ),
           ),
-          _buildSearchBar(context),
         ],
       ),
     );
