@@ -191,7 +191,8 @@ class ProfileScreen extends ConsumerWidget {
 
                             if (shouldLogout) {
                               await ref.read(authProvider.notifier).signOut();
-                              // Navigation will be handled by AuthWrapper automatically
+                              if (!context.mounted) return;
+                              Navigator.of(context).pushNamedAndRemoveUntil('/login', (Route<dynamic> route) => false);
                             }
                           },
                     icon: authState.isLoading 
