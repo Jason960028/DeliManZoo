@@ -102,11 +102,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _ensureGoogleSignInInitialized();
 
-      final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate();
-
-      if (googleUser == null) {
-        return const Left(AuthFailure(message: 'Google sign-in canceled by user.'));
-      }
+      final GoogleSignInAccount googleUser = await _googleSignIn.authenticate();
 
       // Using the original authorizationClient logic as required by the project environment
       final authClient = _googleSignIn.authorizationClient;
@@ -116,7 +112,7 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Left(AuthFailure(message: 'Failed to get Google access token.'));
       }
 
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
 
       if (googleAuth.idToken == null) {
         return const Left(AuthFailure(message: 'Failed to get Google ID token.'));
@@ -213,6 +209,5 @@ class AuthRepositoryImpl implements AuthRepository {
 }
 
 class AuthFailure extends Failure {
-  const AuthFailure({required String message, List<dynamic> properties = const []})
-      : super(message: message, properties: properties);
+  const AuthFailure({required super.message, super.properties});
 }

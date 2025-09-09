@@ -70,7 +70,7 @@ class MyApp extends StatelessWidget {
         ),
         // ListTile 테마 (선택 사항)
         listTileTheme: ListTileThemeData(
-          selectedTileColor: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
+          selectedTileColor: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.5),
         ),
       ),
       home: const AuthWrapper(),

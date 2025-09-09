@@ -59,11 +59,6 @@ class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
         final responseBody = json.decode(response.body);
         // API 응답 구조에 따라 'results' 키에서 리스트를 가져옵니다.
         final List<dynamic> results = responseBody['results'];
-        if (results == null) {
-          // 'results' 키가 없거나 null인 경우의 처리
-          // 이는 API 응답 스펙과 다를 수 있으므로, 실제 응답을 확인하고 조정해야 합니다.
-          throw ServerException(message: "API 응답에서 'results'를 찾을 수 없습니다.", statusCode: response.statusCode);
-        }
         // 각 JSON 객체를 RestaurantModel로 변환
         return results
             .map((jsonItem) => RestaurantModel.fromJson(jsonItem))
@@ -96,9 +91,9 @@ class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
   @override
   Future<List<RestaurantModel>> searchRestaurants(
       String query, String apiKey) async {
-    final _textSearchUrl =
+    final textSearchUrl =
       'https://maps.googleapis.com/maps/api/place/textsearch/json';
-    final url = Uri.parse('$_textSearchUrl?query=$query&key=$apiKey&language=ko&type=restaurant');
+    final url = Uri.parse('$textSearchUrl?query=$query&key=$apiKey&language=ko&type=restaurant');
 
     try {
       final response = await client.get(
@@ -137,9 +132,9 @@ class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
 
   @override
   Future<RestaurantModel> getRestaurantDetails(String placeId, String apiKey) async {
-    final _detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json';
+    final detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json';
     final fields = 'place_id,name,formatted_address,geometry,rating,formatted_phone_number,website,photos,types,opening_hours,price_level,vicinity';
-    final url = Uri.parse('$_detailsUrl?place_id=$placeId&fields=$fields&key=$apiKey&language=ko');
+    final url = Uri.parse('$detailsUrl?place_id=$placeId&fields=$fields&key=$apiKey&language=ko');
 
     try {
       final response = await client.get(

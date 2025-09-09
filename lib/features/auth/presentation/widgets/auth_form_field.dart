@@ -200,29 +200,29 @@ class _AuthFormFieldState extends State<AuthFormField> {
         hintText: widget.hintText ?? _defaultHint,
         helperText: widget.helperText,
         labelStyle: TextStyle(
-          color: Colors.white.withOpacity(0.8),
+          color: Colors.white.withValues(alpha: 0.8),
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
         hintStyle: TextStyle(
-          color: Colors.white.withOpacity(0.6),
+          color: Colors.white.withValues(alpha: 0.6),
           fontSize: 14,
           fontWeight: FontWeight.w400,
         ),
         helperStyle: TextStyle(
-          color: Colors.white.withOpacity(0.7),
+          color: Colors.white.withValues(alpha: 0.7),
           fontSize: 12,
         ),
         prefixIcon: Icon(
           widget.prefixIcon ?? _defaultPrefixIcon,
-          color: Colors.white.withOpacity(0.8),
+          color: Colors.white.withValues(alpha: 0.8),
           size: 20,
         ),
         suffixIcon: _isPasswordField
             ? IconButton(
                 icon: Icon(
                   _obscureText ? Icons.visibility_off : Icons.visibility,
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   size: 20,
                 ),
                 onPressed: _toggleObscureText,
@@ -230,7 +230,7 @@ class _AuthFormFieldState extends State<AuthFormField> {
               )
             : null,
         filled: true,
-        fillColor: Colors.white.withOpacity(0.1),
+        fillColor: Colors.white.withValues(alpha: 0.1),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 16,
@@ -246,7 +246,7 @@ class _AuthFormFieldState extends State<AuthFormField> {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Colors.white.withOpacity(0.2),
+            color: Colors.white.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -255,7 +255,7 @@ class _AuthFormFieldState extends State<AuthFormField> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Colors.white.withOpacity(0.6),
+            color: Colors.white.withValues(alpha: 0.6),
             width: 2,
           ),
         ),
@@ -282,7 +282,7 @@ class _AuthFormFieldState extends State<AuthFormField> {
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
@@ -296,7 +296,7 @@ class _AuthFormFieldState extends State<AuthFormField> {
         
         // Counter styling (for maxLength)
         counterStyle: TextStyle(
-          color: Colors.white.withOpacity(0.6),
+          color: Colors.white.withValues(alpha: 0.6),
           fontSize: 11,
         ),
       ),

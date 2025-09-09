@@ -24,7 +24,7 @@ class ProfileScreen extends ConsumerWidget {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+              Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
               Theme.of(context).colorScheme.surface,
             ],
           ),
@@ -38,9 +38,9 @@ class ProfileScreen extends ConsumerWidget {
                 // Profile Header
                 GlassmorphicContainer(
                   borderRadius: 20.0,
-                  backgroundColorWithOpacity: Theme.of(context).colorScheme.surface.withOpacity(0.7),
+                  backgroundColorWithOpacity: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                     width: 1.0,
                   ),
                   padding: const EdgeInsets.all(24.0),
@@ -54,7 +54,7 @@ class ProfileScreen extends ConsumerWidget {
                           shape: BoxShape.circle,
                           color: Theme.of(context).colorScheme.primary,
                           border: Border.all(
-                            color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
                             width: 2,
                           ),
                         ),
@@ -81,7 +81,7 @@ class ProfileScreen extends ConsumerWidget {
                       
                       // User Info
                       Text(
-                        currentUser?.displayName ?? currentUser?.email?.split('@').first ?? 'User',
+                        currentUser?.displayName ?? currentUser?.email.split('@').first ?? 'User',
                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -90,7 +90,7 @@ class ProfileScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       if (currentUser?.email != null)
                         Text(
-                          currentUser!.email!,
+                          currentUser!.email,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Theme.of(context).colorScheme.onSurfaceVariant,
                           ),
@@ -105,9 +105,9 @@ class ProfileScreen extends ConsumerWidget {
                 // Menu Items
                 GlassmorphicContainer(
                   borderRadius: 16.0,
-                  backgroundColorWithOpacity: Theme.of(context).colorScheme.surface.withOpacity(0.7),
+                  backgroundColorWithOpacity: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                    color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
                     width: 1.0,
                   ),
                   child: Column(

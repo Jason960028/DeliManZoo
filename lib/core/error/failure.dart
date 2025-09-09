@@ -17,26 +17,22 @@ abstract class Failure extends Equatable {
 
 // 일반적인 서버 오류 (예: 4xx, 5xx HTTP 상태 코드)
 class ServerFailure extends Failure {
-  const ServerFailure({required String message, List<dynamic> properties = const []})
-      : super(message: message, properties: properties);
+  const ServerFailure({required super.message, super.properties});
 }
 
 // 네트워크 연결 오류 (예: 인터넷 연결 없음)
 class NetworkFailure extends Failure {
-  const NetworkFailure({String message = '인터넷 연결을 확인해주세요.', List<dynamic> properties = const []}) // properties 추가
-      : super(message: message, properties: properties);
+  const NetworkFailure({super.message = '인터넷 연결을 확인해주세요.', super.properties});
 }
 
 // 캐시 오류 (예: 로컬 데이터 접근 실패)
 class CacheFailure extends Failure {
-  const CacheFailure({required String message, List<dynamic> properties = const []})
-      : super(message: message, properties: properties);
+  const CacheFailure({required super.message, super.properties});
 }
 
 // 입력값 유효성 검사 실패 등 일반적인 로컬 오류
 class LocalValidationFailure extends Failure {
-  const LocalValidationFailure({required String message, List<dynamic> properties = const []})
-      : super(message: message, properties: properties);
+  const LocalValidationFailure({required super.message, super.properties});
 }
 
 // 특정 API에서 발생한 오류
@@ -44,10 +40,10 @@ class ApiFailure extends Failure {
   final int? statusCode; // API 응답 코드 등 추가 정보 포함 가능
 
   const ApiFailure({
-    required String message,
+    required super.message,
     this.statusCode,
-    List<dynamic> properties = const [],
-  }) : super(message: message, properties: properties);
+    super.properties,
+  });
 
   @override
   List<Object?> get props => [message, statusCode, properties];
@@ -55,8 +51,7 @@ class ApiFailure extends Failure {
 
 // 위치 서비스 또는 권한 관련 오류를 위한 Failure
 class LocationFailure extends Failure {
-  const LocationFailure({required String message, List<dynamic> properties = const []})
-      : super(message: message, properties: properties);
+  const LocationFailure({required super.message, super.properties});
 }
 
 

@@ -3,20 +3,13 @@ import '../../domain/entities/user_entity.dart';
 
 class UserModel extends UserEntity {
   const UserModel({
-    required String uid,
-    required String email,
-    String? displayName,
-    String? photoURL,
-    required DateTime createdAt,
-    required DateTime updatedAt,
-  }) : super(
-          uid: uid,
-          email: email,
-          displayName: displayName,
-          photoURL: photoURL,
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-        );
+    required super.uid,
+    required super.email,
+    super.displayName,
+    super.photoURL,
+    required super.createdAt,
+    required super.updatedAt,
+  });
 
   factory UserModel.fromFirebaseUser(User user) {
     final now = DateTime.now();

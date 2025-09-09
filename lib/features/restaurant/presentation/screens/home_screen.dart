@@ -158,16 +158,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         duration: const Duration(milliseconds: 200),
         child: GlassmorphicContainer(
           borderRadius: _isSearchExpanded ? 16.0 : 28.0,
-          backgroundColorWithOpacity: colorScheme.surface.withOpacity(0.95),
+          backgroundColorWithOpacity: colorScheme.surface.withValues(alpha: 0.95),
           border: Border.all(
             color: _isSearchExpanded
-                ? colorScheme.primary.withOpacity(0.3)
-                : colorScheme.outline.withOpacity(0.1),
+                ? colorScheme.primary.withValues(alpha: 0.3)
+                : colorScheme.outline.withValues(alpha: 0.1),
             width: _isSearchExpanded ? 2 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -203,7 +203,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         decoration: InputDecoration(
                           hintText: 'Search Here',
                           hintStyle: TextStyle(
-                            color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                             fontSize: 16,
                           ),
                           border: InputBorder.none,
@@ -232,7 +232,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Container(
                       height: 32,
                       width: 1,
-                      color: colorScheme.outline.withOpacity(0.2),
+                      color: colorScheme.outline.withValues(alpha: 0.2),
                       margin: const EdgeInsets.symmetric(horizontal: 4),
                     ),
 
@@ -359,8 +359,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  colorScheme.primaryContainer.withOpacity(0.6),
-                  colorScheme.secondaryContainer.withOpacity(0.6),
+                  colorScheme.primaryContainer.withValues(alpha: 0.6),
+                  colorScheme.secondaryContainer.withValues(alpha: 0.6),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -379,6 +379,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             markers: _markers,
             myLocationEnabled: true,
             myLocationButtonEnabled: true,
+            zoomControlsEnabled: false, // Add this line
             padding: EdgeInsets.only(
               top: 100, // Space for search bar
               bottom: MediaQuery.of(context).size.height * _sheetMinSize,
@@ -414,7 +415,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // "Search This Area" button
           if (_showSearchThisAreaButton && !_isSearchExpanded)
             Positioned(
-              top: 140,
+              top: 100,
               left: 0,
               right: 0,
               child: Align(
@@ -430,11 +431,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 7),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(25.0),
                     ),
-                    elevation: 4,
+                    elevation: 2,
                   ),
                   onPressed: () {
                     _fetchRestaurantsForCurrentMapArea();
@@ -460,12 +461,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     borderRadius: 16.0,
                     blurSigmaX: 0.0,
                     blurSigmaY: 0.0,
-                    backgroundColorWithOpacity: colorScheme.surface.withOpacity(0.15),
-                    border: Border.all(color: colorScheme.onSurface.withOpacity(0.10)),
+                    backgroundColorWithOpacity: colorScheme.surface.withValues(alpha: 0.15),
+                    border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.10)),
                     child: restaurantsAsyncValue.when(
                       loading: () => Center(
                         child: CircularProgressIndicator(
-                          color: Colors.white.withOpacity(0.7),
+                          color: Colors.white.withValues(alpha: 0.7),
                         ),
                       ),
                       error: (error, stack) => Center(
@@ -485,7 +486,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 error is Failure ? error.message : "목록 로딩 중 오류가 발생했습니다.",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 16,
                                 ),
                               ),
@@ -497,7 +498,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   style: TextStyle(color: colorScheme.onErrorContainer),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: colorScheme.errorContainer.withOpacity(0.8),
+                                  backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.8),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -531,7 +532,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                               height: 5,
                               margin: const EdgeInsets.symmetric(vertical: 10.0),
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.25),
+                                color: Colors.white.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
@@ -549,12 +550,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       height: 90,
                                       borderRadius: 12.0,
                                       backgroundColorWithOpacity: isSelected
-                                          ? colorScheme.primaryContainer.withOpacity(0.5)
-                                          : colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                                          ? colorScheme.primaryContainer.withValues(alpha: 0.5)
+                                          : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                                       border: Border.all(
                                         color: isSelected
                                             ? colorScheme.primary
-                                            : Colors.white.withOpacity(0.2),
+                                            : Colors.white.withValues(alpha: 0.2),
                                         width: isSelected ? 1.5 : 1.0,
                                       ),
                                       child: Material(
@@ -609,7 +610,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                               fontSize: 12,
                                                               color: isSelected
                                                                   ? colorScheme.onPrimaryContainer
-                                                                  .withOpacity(0.8)
+                                                                  .withValues(alpha: 0.8)
                                                                   : darkMutedContentColor,
                                                             ),
                                                             maxLines: 1,
@@ -628,7 +629,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                         Icons.star,
                                                         color: isSelected
                                                             ? colorScheme.onPrimaryContainer
-                                                            .withOpacity(0.9)
+                                                            .withValues(alpha: 0.9)
                                                             : Colors.amber.shade700,
                                                         size: 18,
                                                       ),
@@ -639,7 +640,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                           fontSize: 14,
                                                           color: isSelected
                                                               ? colorScheme.onPrimaryContainer
-                                                              .withOpacity(0.8)
+                                                              .withValues(alpha: 0.8)
                                                               : darkContentColor,
                                                         ),
                                                       ),
@@ -652,7 +653,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                       fontSize: 12,
                                                       color: isSelected
                                                           ? colorScheme.onPrimaryContainer
-                                                          .withOpacity(0.6)
+                                                          .withValues(alpha: 0.6)
                                                           : darkMutedContentColor,
                                                     ),
                                                   ),

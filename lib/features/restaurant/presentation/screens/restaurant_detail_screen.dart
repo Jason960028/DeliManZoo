@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -17,9 +16,8 @@ class RestaurantDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _RestaurantDetailScreenState extends ConsumerState<RestaurantDetailScreen> {
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
   int _currentImageIndex = 0;
-  GoogleMapController? _mapController;
 
   @override
   void initState() {
@@ -81,7 +79,7 @@ class _RestaurantDetailScreenState extends ConsumerState<RestaurantDetailScreen>
               Shadow(
                 offset: const Offset(1, 1),
                 blurRadius: 3.0,
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
               ),
             ],
           ),
@@ -92,7 +90,7 @@ class _RestaurantDetailScreenState extends ConsumerState<RestaurantDetailScreen>
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withOpacity(0.3),
+                Colors.black.withValues(alpha: 0.3),
                 Colors.transparent,
               ],
             ),
@@ -156,7 +154,7 @@ class _RestaurantDetailScreenState extends ConsumerState<RestaurantDetailScreen>
                 child: GlassmorphicContainer(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   borderRadius: 15,
-                  backgroundColorWithOpacity: Colors.black.withOpacity(0.5),
+                  backgroundColorWithOpacity: Colors.black.withValues(alpha: 0.5),
                   child: Text(
                     '${_currentImageIndex + 1} / ${photos.length}',
                     style: const TextStyle(
@@ -433,7 +431,6 @@ class _RestaurantDetailScreenState extends ConsumerState<RestaurantDetailScreen>
                     ),
                   },
                   onMapCreated: (GoogleMapController controller) {
-                    _mapController = controller;
                   },
                   zoomControlsEnabled: false,
                   mapToolbarEnabled: false,
