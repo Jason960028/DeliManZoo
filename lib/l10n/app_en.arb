@@ -1,0 +1,68 @@
+{
+  "restaurantDetail": "Restaurant Details",
+  "@restaurantDetail": {
+    "description": "Title for restaurant detail screen"
+  },
+  "businessHours": "Business Hours",
+  "@businessHours": {
+    "description": "Label for business hours section"
+  },
+  "openNow": "Open Now",
+  "@openNow": {
+    "description": "Status when restaurant is currently open"
+  },
+  "closedNow": "Closed Now",
+  "@closedNow": {
+    "description": "Status when restaurant is currently closed"
+  },
+  "noBusinessHoursInfo": "No business hours information available.",
+  "@noBusinessHoursInfo": {
+    "description": "Message when business hours info is not available"
+  },
+  "cannotLoadBusinessHours": "Unable to load business hours information.",
+  "@cannotLoadBusinessHours": {
+    "description": "Message when business hours cannot be parsed"
+  },
+  "contact": "Contact",
+  "@contact": {
+    "description": "Label for contact section"
+  },
+  "website": "Website",
+  "@website": {
+    "description": "Label for website link"
+  },
+  "location": "Location",
+  "@location": {
+    "description": "Label for location/map section"
+  },
+  "reviews": "Reviews",
+  "@reviews": {
+    "description": "Label for reviews section"
+  },
+  "loadingReviews": "Loading reviews...",
+  "@loadingReviews": {
+    "description": "Message shown while reviews are being loaded"
+  },
+  "cannotMakeCall": "Unable to make phone call",
+  "@cannotMakeCall": {
+    "description": "Error message when phone call cannot be made"
+  },
+  "cannotOpenWebsite": "Unable to open website",
+  "@cannotOpenWebsite": {
+    "description": "Error message when website cannot be opened"
+  },
+  "addedToFavorites": "{restaurantName} has been added to favorites",
+  "@addedToFavorites": {
+    "description": "Message when restaurant is added to favorites",
+    "placeholders": {
+      "restaurantName": {
+        "type": "String",
+        "example": "McDonald's"
+      }
+    }
+  },
+  "navigateToReview": "Navigate to review writing screen",
+  "@navigateToReview": {
+    "description": "Message when navigating to review screen"
+  }
+}
