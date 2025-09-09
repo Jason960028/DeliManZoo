@@ -64,6 +64,8 @@ dependencies:
   # shared_preferences: ^2.2.3 # 간단한 데이터 저장 (예: 사용자 설정)
   # image_picker: ^1.1.2     # 이미지 선택 (리뷰에 사진 첨부 시)
   geolocator: ^12.0.0      # 현재 위치 가져오기 (지도 주변 검색 시)
+  geocoding: ^2.2.0
+  geocoding_platform_interface: ^3.0.0
   # permission_handler: ^11.3.1 # 권한 요청 (위치, 카메라 등)
   connectivity_plus: ^6.0.3 # 또는 최신 버전
   get_it: ^8.2.0

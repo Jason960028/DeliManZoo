@@ -1,3 +1,6 @@
+import 'package:geocoding/geocoding.dart';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -28,11 +31,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   RestaurantEntity? _selectedRestaurant;
   bool _showSearchThisAreaButton = false;
   bool _isSearchExpanded = false;
+  Key _mapKey = UniqueKey();
 
-  static const double _sheetMinSize = 0.15;
-  static const double _sheetInitialSize = 0.15;
-  static const double _sheetSnapMidSize = 0.5;
-  static const double _sheetMaxSize = 0.8;
+  static const double _sheetMinSize = 0.08;
+  static const double _sheetInitialSize = 0.33; // 1/3 of screen
+  static const double _sheetSnapMidSize = 0.6;
+  static const double _sheetMaxSize = 0.9;
 
   @override
   void initState() {
@@ -72,6 +76,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         _moveCameraToPosition(LatLng(firstRestaurant.lat, firstRestaurant.lng));
       } else {
         _tryMoveToCurrentLocation();
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not get current location: ${e.toString()}'))
+        );
       }
     });
   }
@@ -139,171 +146,478 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
-  void _handleSearch(String query) {
-    if (query.isNotEmpty) {
+  void _handleSearch(String query) async {
+    if (query.isEmpty) return;
+
+    _searchFocusNode.unfocus();
+
+    try {
+      List<Location> locations = await locationFromAddress(query, localeIdentifier: "ko_KR");
+      if (locations.isNotEmpty) {
+        final location = locations.first;
+        _moveCameraToPosition(LatLng(location.latitude, location.longitude));
+        setState(() {
+          _mapKey = UniqueKey();
+        });
+      } else {
+        // If no locations are found, search for restaurants as a fallback.
+        ref.read(restaurantListProvider.notifier).searchRestaurants(query);
+      }
+    } catch (e) {
+      // If geocoding fails (e.g., no network, or invalid query format for location),
+      // assume it's a restaurant search query.
+      if (e is NoResultFoundException) {
+        // This is a specific case where the query is valid but finds no location.
+        // We can choose to notify the user or just proceed to restaurant search.
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('장소를 찾을 수 없어 음식점 검색을 시도합니다.')),
+          );
+        }
+      }
       ref.read(restaurantListProvider.notifier).searchRestaurants(query);
-      _searchFocusNode.unfocus();
     }
   }
 
-  Widget _buildFloatingSearchBar(BuildContext context) {
-    final currentUser = ref.watch(currentUserProvider);
+  Widget _buildMyLocationButton() {
     final colorScheme = Theme.of(context).colorScheme;
-
-    return Positioned(
-      top: MediaQuery.of(context).padding.top + 12,
-      left: 16,
-      right: 16,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        child: GlassmorphicContainer(
-          borderRadius: _isSearchExpanded ? 16.0 : 28.0,
-          backgroundColorWithOpacity: colorScheme.surface.withValues(alpha: 0.95),
-          border: Border.all(
-            color: _isSearchExpanded
-                ? colorScheme.primary.withValues(alpha: 0.3)
-                : colorScheme.outline.withValues(alpha: 0.1),
-            width: _isSearchExpanded ? 2 : 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                height: 56,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Row(
-                  children: [
-                    // Menu Button (optional - you can remove this if not needed)
-                    IconButton(
-                      icon: Icon(
-                        Icons.menu,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      onPressed: () {
-                        // Open drawer or menu
-                      },
-                    ),
-
-                    // Search Field
-                    Expanded(
-                      child: TextField(
-                        controller: _searchController,
-                        focusNode: _searchFocusNode,
-                        style: TextStyle(
-                          color: colorScheme.onSurface,
-                          fontSize: 16,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Search Here',
-                          hintStyle: TextStyle(
-                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                            fontSize: 16,
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                        ),
-                        onSubmitted: _handleSearch,
-                        textInputAction: TextInputAction.search,
-                      ),
-                    ),
-
-                    // Clear button (shows when text is entered)
-                    if (_searchController.text.isNotEmpty)
-                      IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: colorScheme.onSurfaceVariant,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {});
-                        },
-                      ),
-
-                    // Divider
-                    Container(
-                      height: 32,
-                      width: 1,
-                      color: colorScheme.outline.withValues(alpha: 0.2),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                    ),
-
-                    // Profile Avatar
-                    InkWell(
-                      onTap: () {
-                        Navigator.of(context).pushNamed('/profile');
-                      },
-                      borderRadius: BorderRadius.circular(20),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: CircleAvatar(
-                          radius: 18,
-                          backgroundColor: colorScheme.primaryContainer,
-                          backgroundImage: currentUser?.photoURL != null
-                              ? NetworkImage(currentUser!.photoURL!)
-                              : null,
-                          child: currentUser?.photoURL == null
-                              ? Icon(
-                            Icons.person,
-                            size: 20,
-                            color: colorScheme.onPrimaryContainer,
-                          )
-                              : null,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // Search suggestions or recent searches (shown when expanded)
-              if (_isSearchExpanded)
-                Container(
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  child: ListView(
-                    shrinkWrap: true,
-                    padding: const EdgeInsets.only(bottom: 8),
-                    children: [
-                      // Recent searches or suggestions
-                      _buildSearchSuggestion(
-                        icon: Icons.history,
-                        text: '카페',
-                        onTap: () {
-                          _searchController.text = '카페';
-                          _handleSearch('카페');
-                        },
-                      ),
-                      _buildSearchSuggestion(
-                        icon: Icons.history,
-                        text: '한식',
-                        onTap: () {
-                          _searchController.text = '한식';
-                          _handleSearch('한식');
-                        },
-                      ),
-                      _buildSearchSuggestion(
-                        icon: Icons.location_on,
-                        text: '주변 맛집',
-                        onTap: () {
-                          ref.read(restaurantListProvider.notifier).fetchRestaurantsForCurrentLocation();
-                          _searchFocusNode.unfocus();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(8.0), // Add some padding around the button
+      child: FloatingActionButton(
+        onPressed: _tryMoveToCurrentLocation,
+        backgroundColor: colorScheme.surface, // Use theme colors
+        foregroundColor: colorScheme.primary, // Icon color
+        elevation: 2.0,
+        heroTag: null, // Add this if you might have multiple FABs on screen in the future
+        mini: true,
+        child: const Icon(Icons.my_location),
       ),
+    );
+  }
+
+  Widget _buildDraggableSheetWithSearch(
+    BuildContext context,
+    AsyncValue<List<RestaurantEntity>> restaurantsAsyncValue,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final currentUser = ref.watch(currentUserProvider);
+
+    return DraggableScrollableSheet(
+      controller: _scrollController,
+      initialChildSize: _sheetInitialSize,
+      minChildSize: _sheetInitialSize, // Set min size to initial size
+      maxChildSize: _sheetMaxSize,
+      snap: true,
+      snapSizes: const [_sheetInitialSize, _sheetSnapMidSize, _sheetMaxSize],
+      builder: (BuildContext context, ScrollController sheetScrollController) {
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(16.0)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+            child: GlassmorphicContainer(
+              borderRadius: 16.0,
+              blurSigmaX: 0.0,
+              blurSigmaY: 0.0,
+              backgroundColorWithOpacity: colorScheme.surface.withValues(alpha: 0.15),
+              border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.10)),
+              child: Column(
+                children: [
+                  // Search Bar UI
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                    child: GlassmorphicContainer(
+                      borderRadius: 28.0,
+                      backgroundColorWithOpacity: colorScheme.surface.withValues(alpha: 0.95),
+                      border: Border.all(
+                        color: _isSearchExpanded
+                            ? colorScheme.primary.withValues(alpha: 0.3)
+                            : colorScheme.outline.withValues(alpha: 0.1),
+                        width: _isSearchExpanded ? 2 : 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                      child: SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              height: 56,
+                              padding: const EdgeInsets.symmetric(horizontal: 8),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.menu,
+                                      color: colorScheme.onSurfaceVariant,
+                                    ),
+                                    onPressed: () {},
+                                  ),
+                                  Expanded(
+                                    child: TextField(
+                                      controller: _searchController,
+                                      focusNode: _searchFocusNode,
+                                      style: TextStyle(
+                                        color: colorScheme.onSurface,
+                                        fontSize: 16,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: 'Search Here',
+                                        hintStyle: TextStyle(
+                                          color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                                          fontSize: 16,
+                                        ),
+                                        border: InputBorder.none,
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                                      ),
+                                      onSubmitted: _handleSearch,
+                                      textInputAction: TextInputAction.search,
+                                    ),
+                                  ),
+                                  if (_searchController.text.isNotEmpty)
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.clear,
+                                        color: colorScheme.onSurfaceVariant,
+                                        size: 20,
+                                      ),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() {});
+                                      },
+                                    ),
+                                  Container(
+                                    height: 32,
+                                    width: 1,
+                                    color: colorScheme.outline.withValues(alpha: 0.2),
+                                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                                  ),
+                                  InkWell(
+                                    onTap: () {
+                                      Navigator.of(context).pushNamed('/profile');
+                                    },
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: CircleAvatar(
+                                        radius: 18,
+                                        backgroundColor: colorScheme.primaryContainer,
+                                        backgroundImage: currentUser?.photoURL != null
+                                            ? NetworkImage(currentUser!.photoURL!)
+                                            : null,
+                                        child: currentUser?.photoURL == null
+                                            ? Icon(
+                                                Icons.person,
+                                                size: 20,
+                                                color: colorScheme.onPrimaryContainer,
+                                              )
+                                            : null,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Flexible(
+                              child: _isSearchExpanded
+                                  ? Container(
+                                      constraints: const BoxConstraints(maxHeight: 200),
+                                      child: ListView(
+                                        shrinkWrap: true,
+                                        padding: const EdgeInsets.only(bottom: 8),
+                                        children: [
+                                          _buildSearchSuggestion(
+                                            icon: Icons.history,
+                                            text: '카페',
+                                            onTap: () {
+                                              _searchController.text = '카페';
+                                              _handleSearch('카페');
+                                            },
+                                          ),
+                                          _buildSearchSuggestion(
+                                            icon: Icons.history,
+                                            text: '한식',
+                                            onTap: () {
+                                              _searchController.text = '한식';
+                                              _handleSearch('한식');
+                                            },
+                                          ),
+                                          _buildSearchSuggestion(
+                                            icon: Icons.location_on,
+                                            text: '주변 맛집',
+                                            onTap: () {
+                                              ref.read(restaurantListProvider.notifier).fetchRestaurantsForCurrentLocation();
+                                              _searchFocusNode.unfocus();
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : const SizedBox.shrink(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Restaurant List
+                  Expanded(
+                    child: Column(
+                      children: [
+                        // Enhanced sheet handle
+                        Container(
+                          width: 36,
+                          height: 4,
+                          margin: const EdgeInsets.symmetric(vertical: 12.0),
+                          decoration: BoxDecoration(
+                            color: colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
+                        Expanded(
+                          child: restaurantsAsyncValue.when(
+                            loading: () => Center(
+                              child: CircularProgressIndicator(
+                                color: Colors.white.withValues(alpha: 0.7),
+                              ),
+                            ),
+                            error: (error, stack) => Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
+                                      color: colorScheme.error,
+                                      size: 48,
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      error is Failure ? error.message : "목록 로딩 중 오류가 발생했습니다.",
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.9),
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 20),
+                                    ElevatedButton.icon(
+                                      icon: Icon(Icons.refresh, color: colorScheme.onErrorContainer),
+                                      label: Text(
+                                        '다시 시도',
+                                        style: TextStyle(color: colorScheme.onErrorContainer),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.8),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                      ),
+                                      onPressed: () => ref
+                                          .read(restaurantListProvider.notifier)
+                                          .fetchRestaurantsForCurrentLocation(),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ),
+                            data: (restaurants) {
+                              if (restaurants.isEmpty) {
+                                return Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16.0),
+                                    child: Text(
+                                      '주변에 표시할 음식점이 없습니다.',
+                                      style: TextStyle(color: colorScheme.onSurface, fontSize: 16),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                );
+                              }
+                              return ListView.builder(
+                                controller: sheetScrollController,
+                                itemCount: restaurants.length,
+                                padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                                itemBuilder: (context, index) {
+                                  final restaurant = restaurants[index];
+                                  final bool isSelected = _selectedRestaurant?.placeId == restaurant.placeId;
+                                  return Container(
+                                    margin: const EdgeInsets.only(bottom: 12.0),
+                                    child: GlassmorphicContainer(
+                                      borderRadius: 16.0,
+                                      backgroundColorWithOpacity: isSelected
+                                          ? colorScheme.primaryContainer.withValues(alpha: 0.8)
+                                          : colorScheme.surface.withValues(alpha: 0.95),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? colorScheme.primary.withValues(alpha: 0.6)
+                                            : colorScheme.outline.withValues(alpha: 0.1),
+                                        width: isSelected ? 2.0 : 0.5,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.08),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        borderRadius: BorderRadius.circular(12.0),
+                                        child: InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              _selectedRestaurant = restaurant;
+                                            });
+                                            _moveCameraToPosition(LatLng(restaurant.lat, restaurant.lng), zoom: 17);
+                                            _updateMarkers(restaurants);
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    RestaurantDetailScreen(restaurant: restaurant),
+                                              ),
+                                            );
+                                          },
+                                          borderRadius: BorderRadius.circular(16.0),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(16.0),
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  width: 56,
+                                                  height: 56,
+                                                  decoration: BoxDecoration(
+                                                    color: isSelected
+                                                        ? colorScheme.primary.withValues(alpha: 0.1)
+                                                        : colorScheme.surfaceContainerHighest,
+                                                    borderRadius: BorderRadius.circular(12),
+                                                  ),
+                                                  child: Icon(
+                                                    Icons.restaurant,
+                                                    color: isSelected
+                                                        ? colorScheme.primary
+                                                        : colorScheme.onSurfaceVariant,
+                                                    size: 28,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 16),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Text(
+                                                        restaurant.name,
+                                                        style: TextStyle(
+                                                          fontWeight: FontWeight.w600,
+                                                          fontSize: 17,
+                                                          color: isSelected
+                                                              ? colorScheme.onPrimaryContainer
+                                                              : colorScheme.onSurface,
+                                                        ),
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      if (restaurant.rating > 0)
+                                                        Row(
+                                                          children: [
+                                                            Icon(
+                                                              Icons.star_rounded,
+                                                              color: Colors.amber.shade600,
+                                                              size: 16,
+                                                            ),
+                                                            const SizedBox(width: 4),
+                                                            Text(
+                                                              restaurant.rating.toStringAsFixed(1),
+                                                              style: TextStyle(
+                                                                fontSize: 14,
+                                                                fontWeight: FontWeight.w500,
+                                                                color: isSelected
+                                                                    ? colorScheme.onPrimaryContainer.withValues(alpha: 0.9)
+                                                                    : colorScheme.onSurface,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(width: 8),
+                                                            Text(
+                                                              '•',
+                                                              style: TextStyle(
+                                                                color: colorScheme.onSurfaceVariant,
+                                                                fontWeight: FontWeight.bold,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(width: 8),
+                                                            Icon(
+                                                              Icons.location_on,
+                                                              color: isSelected
+                                                                  ? colorScheme.onPrimaryContainer.withValues(alpha: 0.7)
+                                                                  : colorScheme.onSurfaceVariant,
+                                                              size: 14,
+                                                            ),
+                                                            const SizedBox(width: 4),
+                                                            Text(
+                                                              '5분', // This could be calculated distance
+                                                              style: TextStyle(
+                                                                fontSize: 14,
+                                                                color: isSelected
+                                                                    ? colorScheme.onPrimaryContainer.withValues(alpha: 0.8)
+                                                                    : colorScheme.onSurfaceVariant,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      const SizedBox(height: 4),
+                                                      if (restaurant.address.isNotEmpty)
+                                                        Text(
+                                                          restaurant.address,
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            color: isSelected
+                                                                ? colorScheme.onPrimaryContainer.withValues(alpha: 0.7)
+                                                                : colorScheme.onSurfaceVariant,
+                                                          ),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow.ellipsis,
+                                                        ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                Icon(
+                                                  Icons.chevron_right,
+                                                  color: isSelected
+                                                      ? colorScheme.onPrimaryContainer.withValues(alpha: 0.6)
+                                                      : colorScheme.onSurfaceVariant,
+                                                  size: 20,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -331,6 +645,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
     ref.listen<AsyncValue<List<RestaurantEntity>>>(restaurantListProvider, (previous, next) {
@@ -348,8 +664,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final restaurantsAsyncValue = ref.watch(restaurantListProvider);
     final colorScheme = Theme.of(context).colorScheme;
-    final darkContentColor = colorScheme.onSurface;
-    final darkMutedContentColor = colorScheme.onSurfaceVariant;
 
     return Scaffold(
       body: Stack(
@@ -370,6 +684,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
           // Google Map
           GoogleMap(
+            key: _mapKey,
             mapType: MapType.normal,
             initialCameraPosition: CameraPosition(
               target: _initialPosition,
@@ -378,11 +693,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             onMapCreated: _onMapCreated,
             markers: _markers,
             myLocationEnabled: true,
-            myLocationButtonEnabled: true,
-            zoomControlsEnabled: false, // Add this line
+            myLocationButtonEnabled: false,
+            zoomControlsEnabled: true,
             padding: EdgeInsets.only(
-              top: 100, // Space for search bar
-              bottom: MediaQuery.of(context).size.height * _sheetMinSize,
+              bottom: MediaQuery.of(context).size.height * _sheetInitialSize,
             ),
             onCameraIdle: () {
               if (_mapController != null && _isMapReady && !_isSearchExpanded) {
@@ -396,7 +710,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               }
             },
             onTap: (_) {
-              // Unfocus search when map is tapped
               _searchFocusNode.unfocus();
               if (mounted) {
                 setState(() {
@@ -404,8 +717,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 });
               }
               _scrollController.animateTo(
-                _sheetInitialSize,
-                duration: const Duration(milliseconds: 300),
+                _sheetMinSize,
+                duration: const Duration(milliseconds: 400),
                 curve: Curves.easeInOut,
               );
               _updateMarkers(restaurantsAsyncValue.asData?.value ?? []);
@@ -415,7 +728,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           // "Search This Area" button
           if (_showSearchThisAreaButton && !_isSearchExpanded)
             Positioned(
-              top: 100,
+              top: MediaQuery.of(context).padding.top + 21,
               left: 0,
               right: 0,
               child: Align(
@@ -444,241 +757,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
 
-          // Bottom sheet with restaurant list
-          DraggableScrollableSheet(
-            controller: _scrollController,
-            initialChildSize: _sheetInitialSize,
-            minChildSize: _sheetMinSize,
-            maxChildSize: _sheetMaxSize,
-            snap: true,
-            snapSizes: const [_sheetMinSize, _sheetSnapMidSize, _sheetMaxSize],
-            builder: (BuildContext context, ScrollController sheetScrollController) {
-              return ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16.0)),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-                  child: GlassmorphicContainer(
-                    borderRadius: 16.0,
-                    blurSigmaX: 0.0,
-                    blurSigmaY: 0.0,
-                    backgroundColorWithOpacity: colorScheme.surface.withValues(alpha: 0.15),
-                    border: Border.all(color: colorScheme.onSurface.withValues(alpha: 0.10)),
-                    child: restaurantsAsyncValue.when(
-                      loading: () => Center(
-                        child: CircularProgressIndicator(
-                          color: Colors.white.withValues(alpha: 0.7),
-                        ),
-                      ),
-                      error: (error, stack) => Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(20.0),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: colorScheme.error,
-                                size: 48,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                error is Failure ? error.message : "목록 로딩 중 오류가 발생했습니다.",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              ElevatedButton.icon(
-                                icon: Icon(Icons.refresh, color: colorScheme.onErrorContainer),
-                                label: Text(
-                                  '다시 시도',
-                                  style: TextStyle(color: colorScheme.onErrorContainer),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: colorScheme.errorContainer.withValues(alpha: 0.8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                ),
-                                onPressed: () => ref
-                                    .read(restaurantListProvider.notifier)
-                                    .fetchRestaurantsForCurrentLocation(),
-                              )
-                            ],
-                          ),
-                        ),
-                      ),
-                      data: (restaurants) {
-                        if (restaurants.isEmpty) {
-                          return Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16.0),
-                              child: Text(
-                                '주변에 표시할 음식점이 없습니다.',
-                                style: TextStyle(color: darkContentColor, fontSize: 16),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-                          );
-                        }
-                        return Column(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 5,
-                              margin: const EdgeInsets.symmetric(vertical: 10.0),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.25),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            Expanded(
-                              child: ListView.builder(
-                                controller: sheetScrollController,
-                                itemCount: restaurants.length,
-                                padding: const EdgeInsets.fromLTRB(0, 0, 0, 8),
-                                itemBuilder: (context, index) {
-                                  final restaurant = restaurants[index];
-                                  final bool isSelected = _selectedRestaurant?.placeId == restaurant.placeId;
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 5.0),
-                                    child: GlassmorphicContainer(
-                                      height: 90,
-                                      borderRadius: 12.0,
-                                      backgroundColorWithOpacity: isSelected
-                                          ? colorScheme.primaryContainer.withValues(alpha: 0.5)
-                                          : colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? colorScheme.primary
-                                            : Colors.white.withValues(alpha: 0.2),
-                                        width: isSelected ? 1.5 : 1.0,
-                                      ),
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        borderRadius: BorderRadius.circular(12.0),
-                                        child: InkWell(
-                                          onTap: () {
-                                            Navigator.of(context).push(
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    RestaurantDetailScreen(restaurant: restaurant),
-                                              ),
-                                            );
-                                          },
-                                          borderRadius: BorderRadius.circular(12.0),
-                                          child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 12.0, vertical: 8.0),
-                                            child: Row(
-                                              children: [
-                                                Icon(
-                                                  Icons.restaurant,
-                                                  color: isSelected
-                                                      ? colorScheme.onPrimaryContainer
-                                                      : darkContentColor,
-                                                  size: 28,
-                                                ),
-                                                const SizedBox(width: 12),
-                                                Expanded(
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                    children: [
-                                                      Text(
-                                                        restaurant.name,
-                                                        style: TextStyle(
-                                                          fontWeight: FontWeight.bold,
-                                                          fontSize: 15,
-                                                          color: isSelected
-                                                              ? colorScheme.onPrimaryContainer
-                                                              : darkContentColor,
-                                                        ),
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
-                                                      ),
-                                                      if (restaurant.address.isNotEmpty)
-                                                        Padding(
-                                                          padding: const EdgeInsets.only(top: 2.0),
-                                                          child: Text(
-                                                            restaurant.address,
-                                                            style: TextStyle(
-                                                              fontSize: 12,
-                                                              color: isSelected
-                                                                  ? colorScheme.onPrimaryContainer
-                                                                  .withValues(alpha: 0.8)
-                                                                  : darkMutedContentColor,
-                                                            ),
-                                                            maxLines: 1,
-                                                            overflow: TextOverflow.ellipsis,
-                                                          ),
-                                                        ),
-                                                    ],
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                if (restaurant.rating > 0)
-                                                  Row(
-                                                    mainAxisSize: MainAxisSize.min,
-                                                    children: [
-                                                      Icon(
-                                                        Icons.star,
-                                                        color: isSelected
-                                                            ? colorScheme.onPrimaryContainer
-                                                            .withValues(alpha: 0.9)
-                                                            : Colors.amber.shade700,
-                                                        size: 18,
-                                                      ),
-                                                      const SizedBox(width: 4),
-                                                      Text(
-                                                        restaurant.rating.toStringAsFixed(1),
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                          color: isSelected
-                                                              ? colorScheme.onPrimaryContainer
-                                                              .withValues(alpha: 0.8)
-                                                              : darkContentColor,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  )
-                                                else
-                                                  Text(
-                                                    '평점 없음',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: isSelected
-                                                          ? colorScheme.onPrimaryContainer
-                                                          .withValues(alpha: 0.6)
-                                                          : darkMutedContentColor,
-                                                    ),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
+          // Bottom sheet with integrated search bar
+          _buildDraggableSheetWithSearch(context, restaurantsAsyncValue),
 
-          // Floating Search Bar (Google Maps style)
-          _buildFloatingSearchBar(context),
+          Positioned(
+            // Position it above the draggable sheet.
+            // You might need to adjust 'bottom' based on your sheet's behavior and min height.
+            // This example positions it relative to the sheet's minimum possible height.
+            top: MediaQuery.of(context).padding.top + 12,
+            right: 16,
+            child: _buildMyLocationButton(),
+          ),
         ],
       ),
     );
