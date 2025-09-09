@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -57,7 +59,7 @@ dependencies:
 
   # 기타 유용한 패키지 (선택 사항)
   dartz: ^0.10.1 # 또는 최신 버전
-  # intl: ^0.19.0            # 날짜/숫자 포맷팅 등 국제화
+  intl: ^0.20.2            # 날짜/숫자 포맷팅 등 국제화
   equatable: ^2.0.5        # 객체 비교 단순화 (주로 Bloc/Cubit과 함께 사용되지만, 모델/엔티티에 유용)
   # shared_preferences: ^2.2.3 # 간단한 데이터 저장 (예: 사용자 설정)
   # image_picker: ^1.1.2     # 이미지 선택 (리뷰에 사진 첨부 시)
@@ -65,6 +67,7 @@ dependencies:
   # permission_handler: ^11.3.1 # 권한 요청 (위치, 카메라 등)
   connectivity_plus: ^6.0.3 # 또는 최신 버전
   get_it: ^8.2.0
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:
@@ -82,6 +85,8 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  generate: true
+  
   assets:
     - .env
 

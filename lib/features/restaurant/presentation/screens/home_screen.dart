@@ -201,7 +201,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           fontSize: 16,
                         ),
                         decoration: InputDecoration(
-                          hintText: '음식점 검색',
+                          hintText: 'Search Here',
                           hintStyle: TextStyle(
                             color: colorScheme.onSurfaceVariant.withOpacity(0.7),
                             fontSize: 16,
@@ -422,7 +422,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 child: ElevatedButton.icon(
                   icon: Icon(Icons.search, color: colorScheme.onPrimary),
                   label: Text(
-                    '이 지역 검색',
+                    'Search This Area',
                     style: TextStyle(
                       color: colorScheme.onPrimary,
                       fontWeight: FontWeight.bold,

@@ -8,6 +8,15 @@ class RestaurantModel extends RestaurantEntity {
     required double lat,
     required double lng,
     required double rating,
+    String? photoReference,
+    String? phoneNumber,
+    String? website,
+    List<String>? photos,
+    List<String>? types,
+    Map<String, dynamic>? openingHours,
+    bool? openNow,
+    int? priceLevel,
+    String? formattedAddress,
   }) : super(
     placeId: placeId,
     name: name,
@@ -15,6 +24,15 @@ class RestaurantModel extends RestaurantEntity {
     lat: lat,
     lng: lng,
     rating: rating,
+    photoReference: photoReference,
+    phoneNumber: phoneNumber,
+    website: website,
+    photos: photos,
+    types: types,
+    openingHours: openingHours,
+    openNow: openNow,
+    priceLevel: priceLevel,
+    formattedAddress: formattedAddress,
   );
 
   // Google Places Nearby Search API의 JSON 응답을 파싱하기 위한 팩토리 생성자
@@ -34,6 +52,48 @@ class RestaurantModel extends RestaurantEntity {
       lat: (json['geometry']['location']['lat'] as num).toDouble(),
       lng: (json['geometry']['location']['lng'] as num).toDouble(),
       rating: ratingValue,
+    );
+  }
+
+  // Google Places Details API의 JSON 응답을 파싱하기 위한 팩토리 생성자
+  factory RestaurantModel.fromDetailsJson(Map<String, dynamic> json) {
+    final ratingValue = json['rating'] != null ? (json['rating'] as num).toDouble() : 0.0;
+    final addressValue = json['vicinity'] ?? json['formatted_address'] ?? '';
+    
+    // 사진 처리
+    final List<String>? photos = json['photos'] != null 
+        ? (json['photos'] as List).map((photo) => photo['photo_reference'] as String).toList()
+        : null;
+    
+    // 타입 처리
+    final List<String>? types = json['types'] != null 
+        ? (json['types'] as List).cast<String>()
+        : null;
+    
+    // 영업시간 처리
+    Map<String, dynamic>? openingHours;
+    bool? openNow;
+    if (json['opening_hours'] != null) {
+      openingHours = Map<String, dynamic>.from(json['opening_hours']);
+      openNow = json['opening_hours']['open_now'];
+    }
+
+    return RestaurantModel(
+      placeId: json['place_id'] as String,
+      name: json['name'] as String,
+      address: addressValue,
+      lat: (json['geometry']['location']['lat'] as num).toDouble(),
+      lng: (json['geometry']['location']['lng'] as num).toDouble(),
+      rating: ratingValue,
+      photoReference: photos?.isNotEmpty == true ? photos!.first : null,
+      phoneNumber: json['formatted_phone_number'],
+      website: json['website'],
+      photos: photos,
+      types: types,
+      openingHours: openingHours,
+      openNow: openNow,
+      priceLevel: json['price_level'],
+      formattedAddress: json['formatted_address'],
     );
   }
 

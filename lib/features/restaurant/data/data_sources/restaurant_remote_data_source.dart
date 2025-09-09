@@ -14,6 +14,9 @@ abstract class RestaurantRemoteDataSource {
 
   Future<List<RestaurantModel>> searchRestaurants(
       String query, String apiKey);
+  
+  /// 특정 place_id에 대한 상세 정보를 가져옵니다.
+  Future<RestaurantModel> getRestaurantDetails(String placeId, String apiKey);
 }
 
 // RestaurantRemoteDataSource의 구현체
@@ -111,6 +114,48 @@ class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
         return results
             .map((jsonItem) => RestaurantModel.fromJson(jsonItem))
             .toList();
+      } else {
+        String errorMessage = 'API 요청 실패';
+        try {
+          final responseBody = json.decode(response.body);
+          if (responseBody['error_message'] != null) {
+            errorMessage = responseBody['error_message'];
+          } else if (responseBody['status'] != null && responseBody['status'] != 'OK') {
+            errorMessage = 'API Status: ${responseBody['status']}';
+          }
+        } catch (e) {
+          // JSON 파싱 실패 시, 기본 에러 메시지 사용
+        }
+        throw ServerException(message: errorMessage, statusCode: response.statusCode);
+      }
+    } on http.ClientException catch (e) {
+      throw ServerException(message: '네트워크 오류: ${e.message}');
+    } catch (e) {
+      throw ServerException(message: '알 수 없는 오류 발생: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<RestaurantModel> getRestaurantDetails(String placeId, String apiKey) async {
+    final _detailsUrl = 'https://maps.googleapis.com/maps/api/place/details/json';
+    final fields = 'place_id,name,formatted_address,geometry,rating,formatted_phone_number,website,photos,types,opening_hours,price_level,vicinity';
+    final url = Uri.parse('$_detailsUrl?place_id=$placeId&fields=$fields&key=$apiKey&language=ko');
+
+    try {
+      final response = await client.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseBody = json.decode(response.body);
+        final result = responseBody['result'];
+        if (result == null) {
+          throw ServerException(message: "API 응답에서 'result'를 찾을 수 없습니다.", statusCode: response.statusCode);
+        }
+        return RestaurantModel.fromDetailsJson(result);
       } else {
         String errorMessage = 'API 요청 실패';
         try {

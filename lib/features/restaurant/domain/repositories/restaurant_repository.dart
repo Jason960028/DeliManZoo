@@ -19,4 +19,12 @@ abstract class RestaurantRepository {
   Future<Either<Failure, List<RestaurantEntity>>> searchRestaurants(
     String query,
   );
+
+  /// 특정 place_id에 대한 상세 정보를 가져옵니다.
+  ///
+  /// 성공 시 [RestaurantEntity]를 포함하는 Right를 반환합니다.
+  /// 실패 시 [Failure]를 포함하는 Left를 반환합니다.
+  Future<Either<Failure, RestaurantEntity>> getRestaurantDetails(
+    String placeId,
+  );
 }

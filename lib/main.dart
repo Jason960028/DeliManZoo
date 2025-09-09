@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'firebase_options.dart';
 import 'injection_container.dart' as di;
 import 'features/restaurant/domain/repositories/restaurant_repository.dart';
@@ -13,6 +13,7 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/profile_screen.dart';
 import 'features/auth/presentation/screens/signup_screen.dart';
 import 'features/auth/presentation/widgets/auth_wrapper.dart';
+import 'l10n/app_localizations.dart';
 
 // main 함수
 Future<void> main() async {
@@ -47,6 +48,16 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: '내 주변 맛집',
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'), // English
+        Locale('ko'), // Korean
+      ],
       theme: ThemeData(
         // Material 3 테마 사용
         useMaterial3: true,
