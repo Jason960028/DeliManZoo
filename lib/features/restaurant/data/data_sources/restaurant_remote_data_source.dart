@@ -47,8 +47,7 @@ class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
     // final keyword = "음식점"; // 또는 name, type
     // final url = Uri.parse('$_baseUrl?location=$lat,$lng&rankby=distance&keyword=$keyword&key=$apiKey&language=ko');
 
-    print('🔍 [DEBUG] Making API request to: $url');
-    
+
     try {
       final response = await client.get(
         url,
@@ -57,37 +56,30 @@ class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
         },
       );
 
-      print('🔍 [DEBUG] API Response Status Code: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseBody = json.decode(response.body);
-        print('🔍 [DEBUG] API Response Body Keys: ${responseBody.keys.toList()}');
-        
+
         if (responseBody['error_message'] != null) {
-          print('🔍 [DEBUG] API Error Message: ${responseBody['error_message']}');
         }
         
         if (responseBody['status'] != null) {
-          print('🔍 [DEBUG] API Status: ${responseBody['status']}');
         }
         
         // Check if status is OK before processing results
         if (responseBody['status'] != 'OK') {
           String errorMsg = responseBody['error_message'] ?? 'API returned status: ${responseBody['status']}';
-          print('🔍 [DEBUG] API request failed: $errorMsg');
           throw ServerException(message: errorMsg, statusCode: response.statusCode);
         }
         
         // API 응답 구조에 따라 'results' 키에서 리스트를 가져옵니다.
         final List<dynamic> results = responseBody['results'] ?? [];
-        print('🔍 [DEBUG] Found ${results.length} restaurants in API response');
-        
+
         // 각 JSON 객체를 RestaurantModel로 변환
         final restaurants = results
             .map((jsonItem) => RestaurantModel.fromJson(jsonItem))
             .toList();
             
-        print('🔍 [DEBUG] Successfully parsed ${restaurants.length} restaurants');
         return restaurants;
       } else {
         // 200 OK가 아닌 경우, 에러 메시지와 상태 코드를 포함하여 ServerException 발생
@@ -95,7 +87,6 @@ class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
         String errorMessage = 'API 요청 실패';
         try {
           final responseBody = json.decode(response.body);
-          print('🔍 [DEBUG] Error response body: $responseBody');
           if (responseBody['error_message'] != null) {
             errorMessage = responseBody['error_message'];
           } else if (responseBody['status'] != null && responseBody['status'] != 'OK') {
@@ -103,17 +94,14 @@ class RestaurantRemoteDataSourceImpl implements RestaurantRemoteDataSource {
           }
         } catch (e) {
           // JSON 파싱 실패 시, 기본 에러 메시지 사용
-          print('🔍 [DEBUG] Failed to parse error response: $e');
         }
         throw ServerException(message: errorMessage, statusCode: response.statusCode);
       }
     } on http.ClientException catch (e) {
       // http 패키지에서 발생하는 네트워크 관련 예외 처리
-      print('🔍 [DEBUG] HTTP Client Exception: ${e.message}');
       throw ServerException(message: '네트워크 오류: ${e.message}');
     } catch (e) {
       // 기타 예외 (예: json.decode 실패 등)
-      print('🔍 [DEBUG] Unexpected error: ${e.toString()}');
       throw ServerException(message: '알 수 없는 오류 발생: ${e.toString()}');
     }
   }
