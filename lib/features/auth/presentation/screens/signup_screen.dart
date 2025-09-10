@@ -524,14 +524,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                         height: 50,
                         child: OutlinedButton.icon(
                           onPressed: authState.isLoading ? null : _signInWithGoogle,
-                          icon: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
-                                image: NetworkImage('https://developers.google.com/identity/images/g-logo.png'),
-                              ),
-                            ),
+                          icon: const Icon(
+                            Icons.login,
+                            size: 20,
+                            color: Colors.white,
                           ),
                           label: const Text(
                             'Continue with Google',

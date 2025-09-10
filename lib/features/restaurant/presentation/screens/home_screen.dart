@@ -49,10 +49,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   void _fetchRestaurantsForCurrentMapArea() {
+    print('🔍 [DEBUG] _fetchRestaurantsForCurrentMapArea called');
     if (_mapController != null && _isMapReady) {
+      print('🔍 [DEBUG] Map controller is ready, getting visible region');
       _mapController!.getVisibleRegion().then((bounds) {
         final centerLat = (bounds.northeast.latitude + bounds.southwest.latitude) / 2;
         final centerLng = (bounds.northeast.longitude + bounds.southwest.longitude) / 2;
+        
+        print('🔍 [DEBUG] Map bounds: NE(${bounds.northeast.latitude}, ${bounds.northeast.longitude}), SW(${bounds.southwest.latitude}, ${bounds.southwest.longitude})');
+        print('🔍 [DEBUG] Calculated center: ($centerLat, $centerLng)');
 
         ref.read(restaurantListProvider.notifier).fetchRestaurantsForLocation(centerLat, centerLng);
         if (mounted) {
@@ -61,6 +66,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           });
         }
       });
+    } else {
+      print('🔍 [DEBUG] Map controller not ready: controller=${_mapController != null}, isReady=$_isMapReady');
     }
   }
 
@@ -114,11 +121,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               _selectedRestaurant = restaurant;
             });
             _moveCameraToPosition(LatLng(restaurant.lat, restaurant.lng), zoom: 16);
-            _scrollController.animateTo(
-              _sheetSnapMidSize,
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-            );
+            if (_scrollController.isAttached) {
+              _scrollController.animateTo(
+                _sheetSnapMidSize,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            }
           },
         ),
         icon: isSelected
@@ -130,11 +139,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             _selectedRestaurant = restaurant;
           });
           _moveCameraToPosition(LatLng(restaurant.lat, restaurant.lng), zoom: 16);
-          _scrollController.animateTo(
-            _sheetSnapMidSize,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
+          if (_scrollController.isAttached) {
+            _scrollController.animateTo(
+              _sheetSnapMidSize,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            );
+          }
         },
       );
     }).toSet();
@@ -716,11 +727,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _selectedRestaurant = null;
                 });
               }
-              _scrollController.animateTo(
-                _sheetMinSize,
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.easeInOut,
-              );
+              if (_scrollController.isAttached) {
+                _scrollController.animateTo(
+                  _sheetMinSize,
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.easeInOut,
+                );
+              }
               _updateMarkers(restaurantsAsyncValue.asData?.value ?? []);
             },
           ),

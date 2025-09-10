@@ -66,11 +66,14 @@ class RestaurantListNotifier extends AsyncNotifier<List<RestaurantEntity>> {
   }
 
   Future<void> fetchRestaurantsForLocation(double lat, double lng) async {
+    print('🔍 [DEBUG] fetchRestaurantsForLocation called with lat: $lat, lng: $lng');
     state = const AsyncValue.loading();
     try {
       final restaurants = await _fetchRestaurants(lat, lng);
+      print('🔍 [DEBUG] Successfully fetched ${restaurants.length} restaurants');
       state = AsyncValue.data(restaurants);
     } catch (e, s) {
+      print('🔍 [DEBUG] Error fetching restaurants: $e');
       // _fetchRestaurants에서 이미 구체적인 Failure를 throw하므로, 그대로 사용
       state = AsyncValue.error(e, s);
     }

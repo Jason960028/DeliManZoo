@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../l10n/app_localizations.dart';
+import '../../../review/presentation/screens/add_review_screen.dart';
 import '../../domain/entities/restaurant_entity.dart';
 import '../../../../core/widgets/glassmorphic_container.dart';
+import '../../../review/presentation/widgets/review_list.dart';
 
 class RestaurantDetailScreen extends ConsumerStatefulWidget {
   final RestaurantEntity restaurant;
@@ -445,7 +447,6 @@ class _RestaurantDetailScreenState extends ConsumerState<RestaurantDetailScreen>
   }
 
   Widget _buildReviewsSection(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -460,16 +461,32 @@ class _RestaurantDetailScreenState extends ConsumerState<RestaurantDetailScreen>
                 const Icon(Icons.rate_review, color: Colors.orange),
                 const SizedBox(width: 8),
                 Text(
-                  l10n.reviews,
+                  '리뷰',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () => _writeReview(widget.restaurant),
+                  child: const Text('리뷰 작성'),
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            // TODO: Implement Firebase reviews
-            Text(l10n.loadingReviews),
+            const SizedBox(height: 16),
+            // Review Summary
+            ReviewSummary(placeId: widget.restaurant.placeId),
+            const SizedBox(height: 16),
+            // Reviews List
+            SizedBox(
+              height: 400, // Fixed height for scrollable review list
+              child: ReviewList(
+                placeId: widget.restaurant.placeId,
+                shrinkWrap: true,
+                physics: const ClampingScrollPhysics(),
+                padding: EdgeInsets.zero,
+              ),
+            ),
           ],
         ),
       ),
@@ -544,10 +561,10 @@ class _RestaurantDetailScreenState extends ConsumerState<RestaurantDetailScreen>
   }
 
   void _writeReview(RestaurantEntity restaurant) {
-    // TODO: Navigate to review writing screen
-    final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.navigateToReview)),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => AddReviewScreen(restaurant: restaurant),
+      ),
     );
   }
 }

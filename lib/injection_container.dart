@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 // Core
 import 'core/platform/network_info.dart';
@@ -25,6 +27,14 @@ import 'features/auth/domain/use_cases/google_sign_in_use_case.dart';
 import 'features/auth/domain/use_cases/logout_use_case.dart';
 import 'features/auth/domain/use_cases/get_current_user_use_case.dart';
 
+// Features - Review
+import 'features/review/data/data_sources/review_remote_data_source.dart';
+import 'features/review/data/repositories/review_repository_impl.dart';
+import 'features/review/domain/repositories/review_repository.dart';
+import 'features/review/domain/use_cases/add_review_use_case.dart';
+import 'features/review/domain/use_cases/get_reviews_for_place_use_case.dart';
+import 'features/review/domain/use_cases/like_review_use_case.dart';
+
 final sl = GetIt.instance;
 
 Future<void> initDI() async {
@@ -42,8 +52,10 @@ Future<void> initDI() async {
   sl.registerLazySingleton(() => http.Client());
   sl.registerLazySingleton(() => Connectivity());
 
-  // Firebase Auth and Google Sign-In
+  // Firebase services
   sl.registerLazySingleton(() => FirebaseAuth.instance);
+  sl.registerLazySingleton(() => FirebaseFirestore.instance);
+  sl.registerLazySingleton(() => FirebaseStorage.instance);
 
   // Google Sign-In v7.x: instance 사용, 설정은 AuthRepository에서 처리
   sl.registerLazySingleton(() => GoogleSignIn.instance);
@@ -91,7 +103,28 @@ Future<void> initDI() async {
   sl.registerLazySingleton(() => LogoutUseCase(sl()));
   sl.registerLazySingleton(() => GetCurrentUserUseCase(sl()));
 
-  
+  // Review Feature
+  // Data sources
+  sl.registerLazySingleton<ReviewRemoteDataSource>(
+    () => ReviewRemoteDataSourceImpl(
+      firestore: sl(),
+      storage: sl(),
+    ),
+  );
+
+  // Repository
+  sl.registerLazySingleton<ReviewRepository>(
+    () => ReviewRepositoryImpl(
+      remoteDataSource: sl(),
+      networkInfo: sl(),
+    ),
+  );
+
+  // Use cases
+  sl.registerLazySingleton(() => AddReviewUseCase(sl()));
+  sl.registerLazySingleton(() => GetReviewsForPlaceUseCase(sl()));
+  sl.registerLazySingleton(() => LikeReviewUseCase(sl()));
+  sl.registerLazySingleton(() => UnlikeReviewUseCase(sl()));
 }
 
 // API 키와 같은 설정을 위한 간단한 클래스

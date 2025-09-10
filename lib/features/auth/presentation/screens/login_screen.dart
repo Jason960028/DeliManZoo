@@ -65,19 +65,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
 
-    // Listen to auth state changes and navigate on successful login
-    ref.listen(authProvider, (previous, next) {
-      next.whenData((user) {
-        if (user != null) {
-          // User successfully logged in
-          // Navigate to main app and clear the navigation stack
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/main',
-            (route) => false,
-          );
-        }
-      });
-    });
+    // Auth state changes are automatically handled by AuthWrapper
+    // No manual navigation needed
 
     return Scaffold(
       body: Container(
@@ -314,14 +303,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         height: 50,
                         child: OutlinedButton.icon(
                           onPressed: authState.isLoading ? null : _signInWithGoogle,
-                          icon: Container(
-                            width: 20,
-                            height: 20,
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
-                                image: NetworkImage('https://developers.google.com/identity/images/g-logo.png'),
-                              ),
-                            ),
+                          icon: const Icon(
+                            Icons.login,
+                            size: 20,
+                            color: Colors.white,
                           ),
                           label: const Text(
                             'Continue with Google',

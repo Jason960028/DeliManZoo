@@ -35,15 +35,10 @@ android {
         applicationId = "com.example.delimanzoo"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdkVersion(23)
+        minSdkVersion (23)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-
-        // manifestPlaceholders 설정
-        manifestPlaceholders += mapOf( // += 로 기존 맵에 추가하거나, = mapOf()로 새로 할당
-            "GOOGLE_MAPS_API_KEY" to (project.findProperty("GOOGLE_MAPS_API_KEY") as? String ?: System.getenv("GOOGLE_MAPS_API_KEY_ENV") ?: "YOUR_DEFAULT_KEY_IF_ANY")
-        )
     }
 
     buildTypes {

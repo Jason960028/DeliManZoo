@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -9,6 +11,8 @@ import 'features/restaurant/domain/repositories/restaurant_repository.dart';
 import 'features/restaurant/presentation/providers/restaurant_providers.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/review/domain/repositories/review_repository.dart';
+import 'features/review/presentation/providers/review_provider.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/profile_screen.dart';
 import 'features/auth/presentation/screens/signup_screen.dart';
@@ -22,6 +26,11 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
+  // Disable app verification for debug/development
+  if (kDebugMode) {
+    FirebaseAuth.instance.setSettings(appVerificationDisabledForTesting: true);
+  }
+
   await dotenv.load(fileName: ".env");
 
   await di.initDI(); // DI 컨테이너 초기화
@@ -33,6 +42,9 @@ Future<void> main() async {
         ),
         authRepositoryProvider.overrideWithValue(
           di.sl<AuthRepository>(),
+        ),
+        reviewRepositoryProvider.overrideWithValue(
+          di.sl<ReviewRepository>(),
         ),
       ],
       child: const MyApp(),
